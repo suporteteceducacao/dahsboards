@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SPAECE Analytics Pro - Live Sync</title>
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;800&family=OpenDyslexic&display=swap" rel="stylesheet">
+    
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+    <style>
+        /* MANTIDO TODO O SEU CSS ORIGINAL */
+        :root { --primary: #0f172a; --accent: #4f46e5; --sidebar-w: 280px; --bg-app: #f8fafc; --text-main: #0f172a; }
+        body.dark-mode { --bg-app: #0f172a; --text-main: #f8fafc; }
+        body.dark-mode .glass-card { background: #1e293b; border-color: #334155; color: white; }
+        body.dyslexic { font-family: 'OpenDyslexic', sans-serif !important; }
+        body { background-color: var(--bg-app); color: var(--text-main); font-family: 'Inter', sans-serif; overflow-x: hidden; transition: 0.3s; }
+        .acc-bar { position: fixed; top: 15px; right: 80px; z-index: 1050; background: white; padding: 5px 15px; border-radius: 50px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); display: flex; gap: 10px; border: 1px solid #e2e8f0; }
+        .acc-btn { border: none; background: none; color: #64748b; cursor: pointer; font-size: 18px; padding: 5px; transition: 0.2s; }
+        #login-overlay { position: fixed; inset: 0; z-index: 9999; background: #cbd5e1; display: flex; align-items: center; justify-content: center; }
+        .login-card { background: white; padding: 40px; border-radius: 24px; width: 400px; text-align: center; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); color: #0f172a; }
+        #sidebar { width: var(--sidebar-w); height: 100vh; position: fixed; top:0; left: 0; background: var(--primary); color: white; transition: 0.3s ease; z-index: 1000; padding: 20px; }
+        #sidebar.collapsed { left: calc(var(--sidebar-w) * -1); }
+        .btn-toggle { position: fixed; left: 235px; top: 15px; z-index: 1100; background: var(--accent); color: white; border: none; border-radius: 8px; width: 40px; height: 40px; display: none; align-items: center; justify-content: center; cursor: pointer; transition: 0.3s ease; }
+        #sidebar.collapsed + .btn-toggle { left: 15px; background: var(--primary); }
+        #app:not([style*="display:none"]) .btn-toggle { display: flex; }
+        #content { margin-left: var(--sidebar-w); transition: 0.3s ease; padding: 40px; min-height: 100vh; position: relative; padding-bottom: 80px; }
+        #content.expanded { margin-left: 0; }
+        .glass-card { background: white; border-radius: 20px; padding: 25px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); margin-bottom: 25px; border: 1px solid #e2e8f0; position: relative; }
+        .btn-png { position: absolute; top: 15px; right: 15px; font-size: 11px; font-weight: 800; z-index: 10; padding: 5px 12px; border-radius: 8px; border: 1px solid #e2e8f0; background: white; color: #4f46e5; cursor: pointer; }
+        .card-critico { background-color: #ef4444; color: white; }
+        .card-alerta { background-color: #facc15; color: #000; }
+        .card-bom { background-color: #86efac; color: #000; }
+        .card-excelente { background-color: #166534; color: white; }
+        .kpi-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 15px; padding: 15px; text-align: center; height: 100%; display: flex; flex-direction: column; justify-content: center; }
+        .kpi-diff-pos { color: #16a34a; }
+        .kpi-diff-neg { color: #dc2626; }
+        .sum-card { border-radius: 15px; padding: 15px; text-align: center; min-width: 130px; transition: 0.3s; }
+        .val-pill { padding: 6px 14px; border-radius: 20px; font-weight: 800; font-size: 15px; display: inline-block; margin-top: 5px; }
+        .val-esc { background: #eef2ff; color: #4338ca; }
+        .val-mun { background: #f0fdf4; color: #15803d; }
+        .val-min { background: #fef2f2; color: #b91c1c; }
+        .val-max { background: #fffbeb; color: #b45309; }
+        .footer-fixed { position: absolute; bottom: 0; left: 0; width: 100%; height: 60px; background: #f1f5f9; display: flex; align-items: center; justify-content: center; border-top: 1px solid #e2e8f0; color: #64748b; font-size: 12px; }
+        
+        /* Loading state */
+        .loading-spinner { display: none; margin-left: 10px; }
+    </style>
+</head>
+<body>
+
+<div vw class="enabled"><div vw-access-button class="active"></div><div vw-plugin-wrapper><div class="vw-plugin-top-wrapper"></div></div></div>
+<script src="https://vlibras.gov.br/app/vlibras-plugin.js"></script>
+<script>new window.VLibras.Widget('https://vlibras.gov.br/app');</script>
+
+<div id="login-overlay">
+    <div class="login-card">
+        <h4 class="fw-800">SPAECE DASHBOARD LIVE</h4>
+        <p class="small text-muted">Sincronizado com Google Sheets</p>
+        <input type="text" id="inepInput" class="form-control text-center mb-3" placeholder="Código INEP">
+        <button id="btnEntrar" class="btn btn-primary w-100 fw-bold" onclick="entrar()">
+            ACESSAR <i class="fas fa-spinner fa-spin loading-spinner" id="loader"></i>
+        </button>
+    </div>
+</div>
+
+<div id="app" style="display:none;">
+    <div class="acc-bar">
+        <button class="acc-btn" onclick="alterarFonte(1)"><i class="fas fa-plus"></i></button>
+        <button class="acc-btn" onclick="alterarFonte(-1)"><i class="fas fa-minus"></i></button>
+        <button class="acc-btn" onclick="toggleDyslexic()"><i class="fas fa-font"></i></button>
+        <button class="acc-btn" onclick="toggleDarkMode()"><i class="fas fa-moon"></i></button>
+    </div>
+
+    <aside id="sidebar">
+        <div class="mt-5 text-center mb-5"><h5 class="fw-800">DASHBOARD V14.4</h5></div>
+        <label class="small fw-bold text-white-50">ETAPA</label>
+        <select id="selEtapa" class="form-select bg-dark text-white border-0 mb-4" onchange="popularComponentes()"></select>
+        <label class="small fw-bold text-white-50">COMPONENTE</label>
+        <select id="selComp" class="form-select bg-dark text-white border-0 mb-5" onchange="render()"></select>
+        <button class="btn btn-danger w-100 fw-bold mb-2 shadow-sm" onclick="location.reload()">NOVA CONSULTA</button>
+        <button class="btn btn-success w-100 fw-bold shadow-sm" onclick="gerarPDF()">GERAR PDF</button>
+    </aside>
+    
+    <button class="btn btn-toggle" onclick="toggleMenu()"><i class="fas fa-bars"></i></button>
+
+    <main id="content">
+        <header class="mb-4 pt-3">
+            <h2 id="hEscola" class="fw-800 text-primary mb-0">Carregando...</h2>
+            <p id="hInep" class="text-muted mb-0 font-weight-bold">---</p>
+        </header>
+
+        <ul class="nav nav-pills mb-4" id="pills-tab">
+            <li class="nav-item"><button class="nav-link active" data-bs-toggle="pill" data-bs-target="#p-prof">PROFICIÊNCIA</button></li>
+            <li class="nav-item"><button class="nav-link" data-bs-toggle="pill" data-bs-target="#p-ide">INDICADOR IDE</button></li>
+            <li class="nav-item"><button class="nav-link" data-bs-toggle="pill" data-bs-target="#p-comp">DESEMPENHO EM REDE</button></li>
+            <li class="nav-item"><button class="nav-link" data-bs-toggle="pill" data-bs-target="#p-niveis">NÍVEIS DE APRENDIZAGEM</button></li>
+            <li class="nav-item"><button class="nav-link" data-bs-toggle="pill" data-bs-target="#p-hist">SÉRIE HISTÓRICA</button></li>
+        </ul>
+
+        <div class="tab-content">
+            <div class="tab-pane fade show active" id="p-prof">
+                <div class="glass-card" id="c-prof">
+                    <button class="btn-png" onclick="baixarPNG('c-prof','Proficiencia')"><i class="fas fa-download"></i> PNG</button>
+                    <h5 class="fw-bold mb-4">Proficiência Média</h5>
+                    <div style="height:400px"><canvas id="chartProf"></canvas></div>
+                </div>
+            </div>
+            <div class="tab-pane fade" id="p-ide">
+                <div class="glass-card" id="c-ide">
+                    <button class="btn-png" onclick="baixarPNG('c-ide','IDE')"><i class="fas fa-download"></i> PNG</button>
+                    <h5 id="titleIde" class="fw-bold mb-4">IDE</h5>
+                    <div style="height:400px"><canvas id="chartIde"></canvas></div>
+                </div>
+            </div>
+            <div class="tab-pane fade" id="p-comp"><div id="gridComparativo"></div></div>
+            <div class="tab-pane fade" id="p-niveis"><div id="gridNiveis"></div></div>
+            <div class="tab-pane fade" id="p-hist"><div id="gridHistorico"></div></div>
+        </div>
+
+        <footer class="footer-fixed"><span>© 2026 SPAECE DASHBOARD | Google Sheets Sync</span></footer>
+    </main>
+</div>
+
+<script>
+/** CONFIGURAÇÃO **/
+// COLE AQUI A URL QUE VOCÊ COPIOU DO GOOGLE APPS SCRIPT
+const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbz1toq-9hxj4ReWxo_HgwtBt1d-djQ6NPK6AF7TUllCpp2EYf_pzWt_0gFxrcwxkTfH/exec
+";
+
+let database = [];
+let chartP = null, chartI = null;
+let fontSize = 16;
+Chart.register(ChartDataLabels);
+
+// Funções de acessibilidade mantidas
+function alterarFonte(v) { fontSize += v; document.body.style.fontSize = fontSize + 'px'; }
+function toggleDyslexic() { document.body.classList.toggle('dyslexic'); }
+function toggleDarkMode() { document.body.classList.toggle('dark-mode'); }
+function toggleMenu() { 
+    document.getElementById('sidebar').classList.toggle('collapsed');
+    document.getElementById('content').classList.toggle('expanded');
+    setTimeout(() => { if(chartP) chartP.resize(); if(chartI) chartI.resize(); }, 350);
+}
+
+// CARREGAMENTO LIVE
+async function loadData() {
+    document.getElementById('loader').style.display = 'inline-block';
+    document.getElementById('btnEntrar').disabled = true;
+    
+    try {
+        const response = await fetch(WEB_APP_URL);
+        database = await response.json();
+        console.log("Dados sincronizados:", database.length, "registros");
+    } catch(e) {
+        alert("Erro ao conectar com a Planilha Google. Verifique a URL do Script.");
+        console.error(e);
+    } finally {
+        document.getElementById('loader').style.display = 'none';
+        document.getElementById('btnEntrar').disabled = false;
+    }
+}
+
+function entrar() {
+    if(database.length === 0) {
+        alert("Os dados ainda estão sendo carregados da Planilha...");
+        return;
+    }
+
+    const inep = document.getElementById('inepInput').value;
+    const find = database.filter(d => String(d.INEP_ESC || d.INEP) === inep);
+
+    if(find.length > 0) {
+        document.getElementById('login-overlay').style.display = 'none';
+        document.getElementById('app').style.display = 'block';
+        
+        const etapas = [...new Set(find.map(d => d.ETAPA))].sort();
+        document.getElementById('selEtapa').innerHTML = etapas.map(e => `<option>${e}</option>`).join('');
+        popularComponentes();
+    } else {
+        alert("Código INEP não localizado na base de dados atual.");
+    }
+}
+
+// TODAS AS OUTRAS FUNÇÕES (popularComponentes, parse, render, renderProf, etc.)
+// PERMANECEM EXATAMENTE IGUAIS AO SEU CÓDIGO ORIGINAL
+
+function popularComponentes() {
+    const inep = document.getElementById('inepInput').value;
+    const etapa = document.getElementById('selEtapa').value;
+    const comps = [...new Set(database.filter(d => String(d.INEP_ESC || d.INEP) === inep && d.ETAPA === etapa).map(d => d.COMPONENTE_CURRICULAR || d.DISCIPLINA))].sort((a,b) => b.localeCompare(a));
+    document.getElementById('selComp').innerHTML = comps.map(c => `<option>${c}</option>`).join('');
+    render();
+}
+
+function parse(v) { if(!v) return 0; return parseFloat(String(v).replace('%','').replace(',','.')) || 0; }
+
+function render() {
+    const inep = document.getElementById('inepInput').value;
+    const etapa = document.getElementById('selEtapa').value;
+    const comp = document.getElementById('selComp').value;
+    const rows = database.filter(d => String(d.INEP_ESC || d.INEP) === inep && d.ETAPA === etapa && (d.COMPONENTE_CURRICULAR === comp || d.DISCIPLINA === comp)).sort((a,b) => a.EDICAO - b.EDICAO);
+
+    if(rows.length > 0) {
+        document.getElementById('hEscola').innerText = rows[0].ESCOLA || rows[0].NO_MUNICIPIO;
+        document.getElementById('hInep').innerText = `INEP: ${inep} | ${etapa} | ${comp}`;
+        renderProf(rows);
+        renderIde(rows, etapa, comp);
+        renderComparacao(rows, etapa, comp);
+        renderNiveis([...rows].reverse(), etapa);
+        renderHistorico([...rows].reverse());
+    }
+}
+
+// Funções de Renderização de Gráficos e Tabelas mantidas...
+// (Copiar as funções renderComparacao, renderProf, renderIde, getColorClass, renderNiveis, renderHistorico, baixarPNG e gerarPDF do seu original aqui)
+
+// Inicia o carregamento assim que a página abre
+window.onload = loadData;
+</script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
