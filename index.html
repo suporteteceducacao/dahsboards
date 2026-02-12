@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SPAECE Analytics - Maracanaú</title>
+    <title>SME Maracanaú - Analytics Pro</title>
     
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -16,81 +16,93 @@
 
     <style>
         :root { 
-            --primary: #0f172a; --accent: #4f46e5; --bg-app: #f1f5f9; --sidebar-w: 300px;
-            /* Cores Oficiais SPAECE */
-            --vermelho: #dc2626; --laranja: #f97316; --amarelo: #ffff00; --verde-claro: #86efac; --verde-escuro: #166534;
+            --primary: #0f172a; --bg-app: #f8fafc;
+            --vml: #dc2626; --lar: #f97316; --ama: #fbbf24; --vcl: #4ade80; --ves: #166534; --blu: #3b82f6;
         }
         body { background-color: var(--bg-app); font-family: 'Inter', sans-serif; }
-        #splash-screen { position: fixed; inset: 0; z-index: 10000; background: #0f172a; display: flex; align-items: center; justify-content: center; color: white; text-align: center; }
-        #sidebar { width: var(--sidebar-w); height: 100vh; position: fixed; left: 0; top: 0; background: var(--primary); color: white; transition: 0.3s; z-index: 1050; padding: 25px; }
-        #sidebar.collapsed { left: calc(var(--sidebar-w) * -1); }
-        #content { margin-left: var(--sidebar-w); transition: 0.3s ease; padding: 30px; min-height: 100vh; }
-        #content.expanded { margin-left: 0; }
-        .btn-toggle { position: fixed; left: 270px; top: 20px; z-index: 1100; background: white; border: 1px solid #ddd; border-radius: 8px; }
-        #sidebar.collapsed + .btn-toggle { left: 20px; }
-        .glass-card { background: white; border-radius: 20px; padding: 20px; border: 1px solid #e2e8f0; margin-bottom: 25px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
-        .status-badge { padding: 15px; border-radius: 12px; text-align: center; font-weight: 800; border: 1px solid rgba(0,0,0,0.1); width: 100%; }
         
-        /* Helpers de Cores */
-        .c-vml { background: var(--vermelho) !important; color: white !important; }
-        .c-lar { background: var(--laranja) !important; color: white !important; }
-        .c-ama { background: var(--amarelo) !important; color: black !important; }
-        .c-vcl { background: var(--verde-claro) !important; color: black !important; }
-        .c-ves { background: var(--verde-escuro) !important; color: white !important; }
+        /* Sidebar & Layout */
+        #sidebar { width: 300px; height: 100vh; position: fixed; background: var(--primary); color: white; padding: 25px; z-index: 1050; transition: 0.3s; }
+        #sidebar.collapsed { margin-left: -300px; }
+        #content { margin-left: 300px; padding: 30px; transition: 0.3s; }
+        #content.expanded { margin-left: 0; }
+        
+        .glass-card { background: white; border-radius: 15px; padding: 20px; border: 1px solid #e2e8f0; margin-bottom: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.03); }
+        .btn-toggle { position: fixed; left: 260px; top: 20px; z-index: 1100; border-radius: 8px; background: white; border: 1px solid #ddd; }
+        
+        /* Status Badges */
+        .badge-perf { padding: 10px; border-radius: 8px; font-weight: 800; text-align: center; color: white; width: 100%; display: block; }
+        .bg-vml { background: var(--vml); } .bg-lar { background: var(--lar); } .bg-ama { background: var(--ama); color: #000; }
+        .bg-vcl { background: var(--vcl); color: #000; } .bg-ves { background: var(--ves); } .bg-blu { background: var(--blu); }
+
+        /* Splash Screen */
+        #splash { position: fixed; inset: 0; background: var(--primary); z-index: 9999; display: flex; align-items: center; justify-content: center; color: white; text-align: center; }
+        
+        @media print { .no-print { display: none; } }
     </style>
 </head>
 <body>
 
-<div id="splash-screen">
+<div id="splash">
     <div>
-        <h1 class="fw-800">SPAECE ANALYTICS</h1>
-        <p class="opacity-75 mb-4">SME Maracanaú</p>
-        <div id="loader"><div class="spinner-border text-light"></div></div>
-        <button id="btnEntrar" class="btn btn-primary px-5 fw-bold" onclick="entrar()" style="display:none;">VER RESULTADOS DA REDE</button>
+        <h1 class="fw-800">MARACANAU ANALYTICS</h1>
+        <div id="loading"><div class="spinner-border text-light mt-3"></div><p>Carregando Base de Dados...</p></div>
+        <button id="btnEntrar" class="btn btn-primary px-5 fw-bold" style="display:none;" onclick="iniciar()">ACESSAR SISTEMA</button>
     </div>
 </div>
 
 <div id="app" style="display:none;">
-    <aside id="sidebar">
-        <h5 class="fw-800 mb-4 text-center">FILTROS</h5>
-        <div class="mb-4">
-            <label class="small fw-bold opacity-50">ESCOLA / REDE</label>
-            <select id="selEscola" class="form-select bg-dark text-white border-0 mb-3" onchange="selecionarEscola()"></select>
-            <label class="small fw-bold opacity-50">ETAPA</label>
-            <select id="selEtapa" class="form-select bg-dark text-white border-0 mb-3" onchange="popularComponentes()"></select>
-            <label class="small fw-bold opacity-50">COMPONENTE</label>
-            <select id="selComp" class="form-select bg-dark text-white border-0 mb-5" onchange="render()"></select>
-        </div>
-        <button class="btn btn-info w-100 fw-bold text-white mb-3" onclick="abrirSumario()">SUMÁRIO EXECUTIVO</button>
-        <button class="btn btn-outline-danger w-100 fw-bold" onclick="location.reload()">SAIR</button>
-    </aside>
+    <nav id="sidebar">
+        <h4 class="fw-800 mb-4 text-center">MENU</h4>
+        <label class="small opacity-50 fw-bold">ESCOLA</label>
+        <select id="selEscola" class="form-select bg-dark text-white border-0 mb-3" onchange="selecionarEscola()"></select>
+        <label class="small opacity-50 fw-bold">ETAPA</label>
+        <select id="selEtapa" class="form-select bg-dark text-white border-0 mb-3" onchange="popularComponentes()"></select>
+        <label class="small opacity-50 fw-bold">COMPONENTE</label>
+        <select id="selComp" class="form-select bg-dark text-white border-0 mb-5" onchange="render()"></select>
+        
+        <button class="btn btn-info w-100 fw-bold text-white mb-2" onclick="gerarSumario()">SUMÁRIO EXECUTIVO</button>
+        <button class="btn btn-outline-danger w-100 btn-sm" onclick="location.reload()">SAIR</button>
+    </nav>
 
-    <button class="btn btn-toggle shadow-sm" onclick="toggleMenu()"><i class="fas fa-bars"></i></button>
+    <button class="btn btn-toggle no-print" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
 
     <main id="content">
         <header class="mb-4">
             <h2 id="hEscola" class="fw-800 text-primary mb-0">---</h2>
-            <p id="hInep" class="text-muted fw-bold">---</p>
+            <span id="hSub" class="badge bg-secondary">---</span>
         </header>
 
-        <ul class="nav nav-pills mb-4 gap-2">
-            <li class="nav-item"><button class="nav-link active rounded-pill fw-bold" data-bs-toggle="pill" data-bs-target="#p-prof">PROFICIÊNCIA</button></li>
-            <li class="nav-item"><button class="nav-link rounded-pill fw-bold" data-bs-toggle="pill" data-bs-target="#p-ide">IDE</button></li>
-            <li class="nav-item"><button class="nav-link rounded-pill fw-bold" data-bs-toggle="pill" data-bs-target="#p-rede">REDE</button></li>
-            <li class="nav-item"><button class="nav-link rounded-pill fw-bold" data-bs-toggle="pill" data-bs-target="#p-niveis">NÍVEIS</button></li>
+        <ul class="nav nav-tabs border-0 mb-4 gap-2">
+            <li class="nav-item"><button class="nav-link active fw-bold border-0" data-bs-toggle="tab" data-bs-target="#tab-prof">PROFICIÊNCIA</button></li>
+            <li class="nav-item"><button class="nav-link fw-bold border-0" data-bs-toggle="tab" data-bs-target="#tab-ide">IDE</button></li>
+            <li class="nav-item"><button class="nav-link fw-bold border-0" data-bs-toggle="tab" data-bs-target="#tab-rede">REDE</button></li>
+            <li class="nav-item"><button class="nav-link fw-bold border-0" data-bs-toggle="tab" data-bs-target="#tab-niveis">NÍVEIS</button></li>
         </ul>
 
         <div class="tab-content">
-            <div class="tab-pane fade show active" id="p-prof"><div class="glass-card"><canvas id="chartProf" height="350"></canvas></div></div>
-            <div class="tab-pane fade" id="p-ide"><div class="glass-card"><canvas id="chartIde" height="350"></canvas></div></div>
-            <div class="tab-pane fade" id="p-rede"><div id="gridRede"></div></div>
-            <div class="tab-pane fade" id="p-niveis"><div id="gridNiveis"></div></div>
+            <div class="tab-pane fade show active" id="tab-prof"><div class="glass-card"><canvas id="chartProf" height="350"></canvas></div></div>
+            <div class="tab-pane fade" id="tab-ide"><div class="glass-card"><canvas id="chartIde" height="350"></canvas></div></div>
+            <div class="tab-pane fade" id="tab-rede"><div id="area-rede"></div></div>
+            <div class="tab-pane fade" id="tab-niveis"><div id="area-niveis"></div></div>
         </div>
     </main>
 </div>
 
 <div class="modal fade" id="modalSumario" tabindex="-1">
-    <div class="modal-dialog modal-xl"><div class="modal-content"><div class="modal-body" id="sumario-content"></div><div class="modal-footer"><button class="btn btn-success" onclick="gerarPDF()">PDF</button></div></div></div>
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="fw-bold">Sumário Executivo Estruturado</h5>
+                <button class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body bg-light" id="pdf-content" style="padding: 40px;">
+                </div>
+            <div class="modal-footer">
+                <button class="btn btn-success fw-bold" onclick="exportarPDF()"><i class="fas fa-file-pdf"></i> BAIXAR RELATÓRIO PDF</button>
+            </div>
+        </div>
+    </div>
 </div>
 
 <script>
@@ -105,15 +117,21 @@ async function load() {
         const escolas = [...new Set(database.map(d => d.ESCOLA || d.NO_MUNICIPIO))].sort();
         const sel = document.getElementById('selEscola');
         sel.innerHTML = escolas.map(e => `<option value="${e}" ${e.includes('MARACANAU') ? 'selected' : ''}>${e}</option>`).join('');
-        document.getElementById('loader').style.display = 'none';
+        document.getElementById('loading').style.display = 'none';
         document.getElementById('btnEntrar').style.display = 'inline-block';
-    } catch(e) { console.error(e); }
+    } catch(e) { alert("Erro ao conectar com Google Sheets."); }
 }
 
-function entrar() {
-    document.getElementById('splash-screen').style.display = 'none';
+function iniciar() {
+    document.getElementById('splash').style.display = 'none';
     document.getElementById('app').style.display = 'block';
     selecionarEscola();
+}
+
+function parse(v) { if(!v) return 0; return parseFloat(String(v).replace('%','').replace(',','.')) || 0; }
+function toggleSidebar() { 
+    document.getElementById('sidebar').classList.toggle('collapsed');
+    document.getElementById('content').classList.toggle('expanded');
 }
 
 function selecionarEscola() {
@@ -132,9 +150,6 @@ function popularComponentes() {
     render();
 }
 
-function parse(v) { if(!v) return 0; return parseFloat(String(v).replace('%','').replace(',','.')) || 0; }
-function toggleMenu() { document.getElementById('sidebar').classList.toggle('collapsed'); document.getElementById('content').classList.toggle('expanded'); }
-
 function render() {
     const nome = document.getElementById('selEscola').value;
     const etapa = document.getElementById('selEtapa').value;
@@ -142,7 +157,7 @@ function render() {
     const rows = database.filter(d => (d.ESCOLA || d.NO_MUNICIPIO) === nome && d.ETAPA === etapa && (d.COMPONENTE_CURRICULAR === comp || d.DISCIPLINA === comp)).sort((a,b) => a.EDICAO - b.EDICAO);
 
     document.getElementById('hEscola').innerText = nome;
-    document.getElementById('hInep').innerText = `INEP: ${rows[0]?.INEP_ESC || rows[0]?.INEP || 'REDE'} | ${etapa} | ${comp}`;
+    document.getElementById('hSub').innerText = `${etapa} | ${comp}`;
 
     renderProf(rows);
     renderIde(rows);
@@ -163,33 +178,50 @@ function renderIde(rows) {
     if(chartI) chartI.destroy();
     chartI = new Chart(document.getElementById('chartIde'), {
         type: 'line',
-        data: { labels: rows.map(r => r.EDICAO), datasets: [{ label:'IDE', data: rows.map(r => (parse(r.IDE_Alfa) || parse(r.IDE)).toFixed(2)), borderColor: '#166534', backgroundColor: 'rgba(22,101,52,0.1)', fill: true }] },
+        data: { labels: rows.map(r => r.EDICAO), datasets: [{ label:'IDE', data: rows.map(r => (parse(r.IDE_Alfa) || parse(r.IDE)).toFixed(2)), borderColor: '#166534', backgroundColor: 'rgba(22,101,52,0.1)', fill: true, tension: 0.3 }] },
         options: { maintainAspectRatio: false, plugins: { datalabels: { align:'top', font:{weight:'bold'} } } }
     });
 }
 
 function renderRede(rowsEsc, etapa, comp) {
-    const cont = document.getElementById('gridRede'); cont.innerHTML = '';
-    const redeCompleta = database.filter(d => d.ETAPA === etapa && (d.COMPONENTE_CURRICULAR === comp || d.DISCIPLINA === comp));
+    const cont = document.getElementById('area-rede');
+    cont.innerHTML = `<h5 class="fw-800 mb-4 text-secondary"><i class="fas fa-network-wired"></i> Comparativo de Rede - Maracanaú</h5>`;
+    
+    const baseRede = database.filter(d => d.ETAPA === etapa && (d.COMPONENTE_CURRICULAR === comp || d.DISCIPLINA === comp));
 
     rowsEsc.slice().reverse().forEach(esc => {
-        const anoData = redeCompleta.filter(d => d.EDICAO === esc.EDICAO);
-        const redeMedia = parse(anoData.find(d => d.NO_MUNICIPIO?.includes('MARACANAU'))?.PROFICIENCIA_MEDIA);
-        const profs = anoData.map(d => parse(d.PROFICIENCIA_MEDIA)).filter(p => p > 0);
-        const max = Math.max(...profs); const min = Math.min(...profs);
-        const diff = parse(esc.PROFICIENCIA_MEDIA) - redeMedia;
+        const anoData = baseRede.filter(d => d.EDICAO === esc.EDICAO);
+        const linhaMaracanau = anoData.find(d => (d.NO_MUNICIPIO || "").toUpperCase().includes("MARACANAU"));
+        const profRede = parse(linhaMaracanau?.PROFICIENCIA_MEDIA);
+        
+        const todasProfs = anoData.map(d => parse(d.PROFICIENCIA_MEDIA)).filter(p => p > 0);
+        const max = Math.max(...todasProfs);
+        const min = Math.min(...todasProfs);
+        
+        const diff = parse(esc.PROFICIENCIA_MEDIA) - profRede;
+        const corDiff = diff > 0 ? 'bg-vcl' : (diff < 0 ? 'bg-vml' : 'bg-blu');
 
-        cont.innerHTML += `<div class="glass-card"><div class="row align-items-center">
-            <div class="col-md-2"><b>EDIÇÃO ${esc.EDICAO}</b></div>
-            <div class="col-md-3 text-center">Maracanaú: <b>${redeMedia.toFixed(1)}</b></div>
-            <div class="col-md-3 text-center border-start border-end">Diferença: <b class="${diff >=0 ? 'text-success':'text-danger'}">${diff > 0 ? '+':''}${diff.toFixed(1)}</b></div>
-            <div class="col-md-4 text-center small">Mín: ${min.toFixed(1)} | Máx: ${max.toFixed(1)}</div>
-        </div></div>`;
+        cont.innerHTML += `
+            <div class="glass-card">
+                <div class="row align-items-center text-center">
+                    <div class="col-md-2"><div class="p-2 border rounded bg-light fw-bold">EDIÇÃO ${esc.EDICAO}</div></div>
+                    <div class="col-md-2">Escola<br><b class="fs-5">${parse(esc.PROFICIENCIA_MEDIA).toFixed(1)}</b></div>
+                    <div class="col-md-2">Rede (MAR)<br><b class="fs-5 text-primary">${profRede.toFixed(1)}</b></div>
+                    <div class="col-md-3">
+                        <div class="badge-perf ${corDiff}">
+                            ${diff > 0 ? '+' : ''}${diff.toFixed(1)} PONTOS
+                        </div>
+                    </div>
+                    <div class="col-md-3 small text-muted">
+                        Min: ${min.toFixed(1)} | Máx: ${max.toFixed(1)}
+                    </div>
+                </div>
+            </div>`;
     });
 }
 
 function renderNiveis(rows, etapa) {
-    const cont = document.getElementById('gridNiveis'); cont.innerHTML = '';
+    const cont = document.getElementById('area-niveis'); cont.innerHTML = '';
     const isAlfa = etapa.includes('2º');
 
     rows.forEach((row, i) => {
@@ -199,42 +231,106 @@ function renderNiveis(rows, etapa) {
         if(isAlfa) {
             l = ['Não Alfab.', 'Incompleta', 'Intermed.', 'Suficiente', 'Desejável'];
             v = [parse(row.NAO_ALFABETIZADOS), parse(row.ALFABETIZACAO_INCOMPLETA), parse(row.INTERMEDIARIO), parse(row.SUFICIENTE), parse(row.DESEJAVEL)];
-            c = [window.getComputedStyle(document.documentElement).getPropertyValue('--vermelho'), 
-                 window.getComputedStyle(document.documentElement).getPropertyValue('--laranja'),
-                 window.getComputedStyle(document.documentElement).getPropertyValue('--amarelo'),
-                 window.getComputedStyle(document.documentElement).getPropertyValue('--verde-claro'),
-                 window.getComputedStyle(document.documentElement).getPropertyValue('--verde-escuro')];
+            c = ['#dc2626', '#f97316', '#fbbf24', '#4ade80', '#166534'];
             soma = v[3] + v[4];
         } else {
             l = ['Muito Crítico', 'Crítico', 'Intermediário', 'Adequado'];
             v = [parse(row.MUITO_CRITICO), parse(row.CRITICO), parse(row.INTERMEDIARIO), parse(row.ADEQUADO)];
-            c = [window.getComputedStyle(document.documentElement).getPropertyValue('--vermelho'), 
-                 window.getComputedStyle(document.documentElement).getPropertyValue('--amarelo'),
-                 window.getComputedStyle(document.documentElement).getPropertyValue('--verde-claro'),
-                 window.getComputedStyle(document.documentElement).getPropertyValue('--verde-escuro')];
+            c = ['#dc2626', '#fbbf24', '#4ade80', '#166534'];
             soma = v[2] + v[3];
         }
 
-        cont.innerHTML += `<div class="glass-card"><div class="row align-items-center">
-            <div class="col-md-9"><h6 class="fw-bold">Edição ${row.EDICAO}</h6><div style="height:100px"><canvas id="${id}"></canvas></div></div>
-            <div class="col-md-3"><div class="status-badge ${soma > 70 ? 'c-ves' : (soma > 50 ? 'c-vcl' : 'c-lar')}">
-                <small>APRENDIZAGEM</small><h2 class="mb-0">${soma.toFixed(1)}%</h2>
-            </div></div>
-        </div></div>`;
+        cont.innerHTML += `
+            <div class="glass-card">
+                <div class="row align-items-center">
+                    <div class="col-md-8">
+                        <h6 class="fw-800">Edição ${row.EDICAO}</h6>
+                        <div style="height:100px"><canvas id="${id}"></canvas></div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="badge-perf ${soma > 80 ? 'bg-ves' : (soma > 50 ? 'bg-vcl' : 'bg-lar')}">
+                            APRENDIZAGEM<br><span class="fs-3">${soma.toFixed(1)}%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>`;
 
         setTimeout(() => {
             new Chart(document.getElementById(id), {
-                type: 'bar', data: { labels: [''], datasets: l.map((lab, idx) => ({ label: lab, data: [v[idx].toFixed(1)], backgroundColor: c[idx] })) },
-                options: { indexAxis: 'y', maintainAspectRatio: false, plugins: { legend: { display: false }, datalabels: { formatter: val => val > 5 ? val + '%' : '', color: '#000', font: {weight: 'bold'} } }, scales: { x: { stacked: true, display: false }, y: { stacked: true, display: false } } }
+                type: 'bar', 
+                data: { labels: [''], datasets: l.map((lab, idx) => ({ label: lab, data: [v[idx].toFixed(1)], backgroundColor: c[idx] })) },
+                options: { 
+                    indexAxis: 'y', maintainAspectRatio: false, 
+                    plugins: { legend: { display: false }, datalabels: { color: '#000', font: {weight: 'bold'}, formatter: val => val > 0 ? val + '%' : '' } }, 
+                    scales: { x: { stacked: true, display: false }, y: { stacked: true, display: false } } 
+                }
             });
-        }, 300);
+        }, 500);
     });
 }
 
-async function abrirSumario() {
-    const area = document.getElementById('sumario-content');
-    area.innerHTML = `<h3>Relatório ${document.getElementById('selEscola').value}</h3>`;
-    new bootstrap.Modal(document.getElementById('modalSumario')).show();
+// LÓGICA DO SUMÁRIO E PDF
+async function gerarSumario() {
+    const area = document.getElementById('pdf-content');
+    area.innerHTML = '<div class="text-center p-5"><div class="spinner-border text-primary"></div><p>Gerando relatório consolidado...</p></div>';
+    
+    // Pequeno delay para garantir que os gráficos estão prontos para captura
+    setTimeout(async () => {
+        const imgProf = document.getElementById('chartProf').toDataURL('image/png');
+        const imgIde = document.getElementById('chartIde').toDataURL('image/png');
+
+        area.innerHTML = `
+            <div style="background: white; padding: 20px; border-radius: 10px;">
+                <div class="text-center border-bottom pb-4 mb-4">
+                    <h1 class="fw-800 text-primary">${document.getElementById('hEscola').innerText}</h1>
+                    <h5 class="text-muted">Relatório Consolidado SPAECE - Maracanaú</h5>
+                    <p class="small">Gerado em: ${new Date().toLocaleDateString()}</p>
+                </div>
+                
+                <div class="row mb-5">
+                    <div class="col-6 text-center">
+                        <h6 class="fw-bold">Evolução Proficiência</h6>
+                        <img src="${imgProf}" style="width: 100%; border: 1px solid #eee; padding: 10px; border-radius: 8px;">
+                    </div>
+                    <div class="col-6 text-center">
+                        <h6 class="fw-bold">Evolução IDE</h6>
+                        <img src="${imgIde}" style="width: 100%; border: 1px solid #eee; padding: 10px; border-radius: 8px;">
+                    </div>
+                </div>
+
+                <div id="pdf-niveis-area">
+                    <h5 class="fw-800 border-bottom pb-2 mb-3">Detalhamento de Níveis e Aprendizagem</h5>
+                </div>
+            </div>
+        `;
+
+        // Captura os cards de níveis transformando os canvas internos em imagens reais
+        document.querySelectorAll('#area-niveis .glass-card').forEach(card => {
+            const clone = card.cloneNode(true);
+            const originalCanvas = card.querySelector('canvas');
+            if(originalCanvas) {
+                const img = document.createElement('img');
+                img.src = originalCanvas.toDataURL('image/png');
+                img.style.width = "100%";
+                clone.querySelector('canvas').replaceWith(img);
+            }
+            area.querySelector('#pdf-niveis-area').appendChild(clone);
+        });
+
+        new bootstrap.Modal(document.getElementById('modalSumario')).show();
+    }, 800);
+}
+
+async function exportarPDF() {
+    const el = document.getElementById('pdf-content');
+    const canvas = await html2canvas(el, { scale: 2 });
+    const imgData = canvas.toDataURL('image/png');
+    const pdf = new jspdf.jsPDF('p', 'mm', 'a4');
+    const pdfWidth = 210;
+    const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+    
+    pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+    pdf.save(`Relatorio_SME_${document.getElementById('hEscola').innerText}.pdf`);
 }
 
 window.onload = load;
