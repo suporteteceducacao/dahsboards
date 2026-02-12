@@ -19,23 +19,25 @@
             --primary: #0f172a; --bg-app: #f1f5f9;
             --vml: #dc2626; --lar: #f97316; --ama: #fbbf24; --vcl: #4ade80; --ves: #166534; --blu: #3b82f6;
         }
-        body { background-color: var(--bg-app); font-family: 'Inter', sans-serif; }
+        body { background-color: var(--bg-app); font-family: 'Inter', sans-serif; overflow-x: hidden; }
         
-        #sidebar { width: 300px; height: 100vh; position: fixed; background: var(--primary); color: white; padding: 25px; z-index: 1050; transition: 0.3s; }
-        #sidebar.collapsed { margin-left: -300px; }
-        #content { margin-left: 300px; padding: 30px; transition: 0.8s cubic-bezier(0.4, 0, 0.2, 1); }
-        #content.expanded { margin-left: 0; }
+        /* SIDEBAR RETRÁTIL */
+        #sidebar { width: 300px; height: 100vh; position: fixed; background: var(--primary); color: white; padding: 25px; z-index: 1050; transition: all 0.4s ease; left: 0; }
+        #sidebar.collapsed { left: -300px; }
         
+        #content { margin-left: 300px; padding: 30px; transition: all 0.4s ease; width: calc(100% - 300px); }
+        #content.expanded { margin-left: 0; width: 100%; }
+        
+        .btn-toggle { position: fixed; left: 315px; top: 20px; z-index: 1100; transition: all 0.4s ease; background: white; border: 1px solid #ddd; }
+        #sidebar.collapsed + .btn-toggle { left: 15px; }
+
         .glass-card { 
             background: white; border-radius: 15px; padding: 20px; border: 1px solid #e2e8f0; 
             margin-bottom: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.03);
             animation: slideUp 0.6s ease-out;
         }
 
-        @keyframes slideUp {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
         
         .badge-perf { padding: 12px; border-radius: 10px; font-weight: 800; text-align: center; color: white; width: 100%; display: block; font-size: 1.1rem; }
         .bg-vml { background: var(--vml); color: white; } 
@@ -45,9 +47,12 @@
 
         #splash { position: fixed; inset: 0; background: var(--primary); z-index: 9999; display: flex; align-items: center; justify-content: center; color: white; text-align: center; }
         
-        /* Estilos PDF/Sumário */
+        /* PDF/Sumário */
         .pdf-header { border-bottom: 3px solid var(--primary); margin-bottom: 30px; padding-bottom: 10px; }
         .pdf-title { font-weight: 800; color: var(--primary); text-transform: uppercase; }
+        
+        .table-technical { font-size: 0.9rem; }
+        .table-technical th { background: #f8fafc; color: #475569; text-transform: uppercase; letter-spacing: 0.5px; }
     </style>
 </head>
 <body>
@@ -83,8 +88,12 @@
 
     <main id="content">
         <header class="mb-4">
-            <h2 id="hEscola" class="fw-800 text-primary mb-0">---</h2>
-            <span id="hSub" class="badge bg-secondary p-2 mt-2">---</span>
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2 id="hEscola" class="fw-800 text-primary mb-0">---</h2>
+                    <span id="hSub" class="badge bg-secondary p-2 mt-2">---</span>
+                </div>
+            </div>
         </header>
 
         <ul class="nav nav-pills border-0 mb-4 gap-2">
@@ -92,6 +101,7 @@
             <li class="nav-item"><button class="nav-link fw-bold px-4" data-bs-toggle="pill" data-bs-target="#tab-ide">IDE</button></li>
             <li class="nav-item"><button class="nav-link fw-bold px-4" data-bs-toggle="pill" data-bs-target="#tab-rede">COMPARAÇÃO REDE</button></li>
             <li class="nav-item"><button class="nav-link fw-bold px-4" data-bs-toggle="pill" data-bs-target="#tab-niveis">NÍVEIS</button></li>
+            <li class="nav-item"><button class="nav-link fw-bold px-4 bg-white text-dark border" data-bs-toggle="pill" data-bs-target="#tab-relatorio">RELATÓRIO</button></li>
         </ul>
 
         <div class="tab-content">
@@ -99,6 +109,7 @@
             <div class="tab-pane fade" id="tab-ide"><div class="glass-card"><canvas id="chartIde" height="380"></canvas></div></div>
             <div class="tab-pane fade" id="tab-rede"><div id="area-rede"></div></div>
             <div class="tab-pane fade" id="tab-niveis"><div id="area-niveis"></div></div>
+            <div class="tab-pane fade" id="tab-relatorio"><div id="area-relatorio" class="glass-card"></div></div>
         </div>
     </main>
 </div>
@@ -142,9 +153,12 @@ function iniciar() {
 }
 
 function parse(v) { if(!v) return 0; return parseFloat(String(v).replace('%','').replace(',','.')) || 0; }
+
 function toggleSidebar() { 
-    document.getElementById('sidebar').classList.toggle('collapsed');
-    document.getElementById('content').classList.toggle('expanded');
+    const sb = document.getElementById('sidebar');
+    const ct = document.getElementById('content');
+    sb.classList.toggle('collapsed');
+    ct.classList.toggle('expanded');
 }
 
 function selecionarEscola() {
@@ -176,6 +190,7 @@ function render() {
     renderIde(rows);
     renderRede(rows, etapa, comp);
     renderNiveis([...rows].reverse(), etapa);
+    renderRelatorioTabela(rows);
 }
 
 function renderProf(rows) {
@@ -194,12 +209,12 @@ function renderProf(rows) {
 function renderIde(rows) {
     if(chartI) chartI.destroy();
     chartI = new Chart(document.getElementById('chartIde'), {
-        type: 'line',
-        data: { labels: rows.map(r => r.EDICAO), datasets: [{ label:'IDE', data: rows.map(r => (parse(r.IDE_Alfa) || parse(r.IDE)).toFixed(2)), borderColor: '#166534', backgroundColor: 'rgba(22,101,52,0.1)', fill: true, tension: 0.3, pointRadius: 6 }] },
+        type: 'bar', // Alterado para barras conforme pedido
+        data: { labels: rows.map(r => r.EDICAO), datasets: [{ label:'IDE', data: rows.map(r => (parse(r.IDE_Alfa) || parse(r.IDE)).toFixed(1)), backgroundColor: '#166534', borderRadius: 5 }] },
         options: { 
-            animation: { duration: 2000 },
+            animation: { duration: 1500 },
             maintainAspectRatio: false, 
-            plugins: { datalabels: { align:'top', font:{weight:'bold', size: 13}, formatter: v => v > 0 ? v : '' } } 
+            plugins: { datalabels: { anchor:'end', align:'top', font:{weight:'bold', size: 14}, formatter: v => v > 0 ? v : '' } } 
         }
     });
 }
@@ -239,7 +254,6 @@ function renderNiveis(rows, etapa) {
     rows.forEach((row, i) => {
         const id = `chNiv-${i}`;
         let l, v, c, soma;
-        
         if(isAlfa) {
             l = ['Não Alfab.', 'Incompleta', 'Intermed.', 'Suficiente', 'Desejável'];
             v = [parse(row.NAO_ALFABETIZADOS), parse(row.ALFABETIZACAO_INCOMPLETA), parse(row.INTERMEDIARIO), parse(row.SUFICIENTE), parse(row.DESEJAVEL)];
@@ -256,7 +270,7 @@ function renderNiveis(rows, etapa) {
             <div class="glass-card">
                 <div class="row align-items-center">
                     <div class="col-md-8"><h6>Edição ${row.EDICAO} - Distribuição por Níveis</h6><div style="height:120px"><canvas id="${id}"></canvas></div></div>
-                    <div class="col-md-4">
+                    <div class="col-md-4 text-center">
                         <div class="badge-perf ${soma > 75 ? 'bg-ves' : (soma > 50 ? 'bg-vcl' : 'bg-ama')}">
                             APRENDIZAGEM<br><span class="fs-2">${soma.toFixed(1)}%</span>
                         </div>
@@ -284,11 +298,44 @@ function renderNiveis(rows, etapa) {
     });
 }
 
+function renderRelatorioTabela(rows) {
+    const cont = document.getElementById('area-relatorio');
+    let html = `
+        <h5 class="fw-800 mb-4"><i class="fas fa-table me-2"></i>Quadro Resumo Técnico</h5>
+        <div class="table-responsive">
+            <table class="table table-hover table-technical">
+                <thead>
+                    <tr>
+                        <th>Edição</th>
+                        <th>Proficiência</th>
+                        <th>IDE</th>
+                        <th>Aprendizagem %</th>
+                        <th>Participação %</th>
+                    </tr>
+                </thead>
+                <tbody>`;
+    
+    [...rows].reverse().forEach(r => {
+        const etapa = document.getElementById('selEtapa').value;
+        const apren = etapa.includes('2º') ? (parse(r.SUFICIENTE) + parse(r.DESEJAVEL)) : (parse(r.INTERMEDIARIO) + parse(r.ADEQUADO));
+        html += `
+            <tr>
+                <td class="fw-bold text-primary">${r.EDICAO}</td>
+                <td>${parse(r.PROFICIENCIA_MEDIA).toFixed(1)}</td>
+                <td>${(parse(r.IDE_Alfa) || parse(r.IDE)).toFixed(1)}</td>
+                <td class="fw-bold">${apren.toFixed(1)}%</td>
+                <td>${parse(r.TAXA_PARTICIPACAO).toFixed(1)}%</td>
+            </tr>`;
+    });
+    
+    html += `</tbody></table></div>`;
+    cont.innerHTML = html;
+}
+
 async function gerarSumario() {
     const area = document.getElementById('pdf-content');
-    area.innerHTML = '<div class="text-center p-5"><div class="spinner-border text-primary"></div><p>Consolidando indicadores...</p></div>';
+    area.innerHTML = '<div class="text-center p-5"><div class="spinner-border text-primary"></div><p>Gerando arquivos...</p></div>';
     
-    // Captura os gráficos Proficiencia e IDE antes de abrir o modal
     const imgProf = document.getElementById('chartProf').toDataURL('image/png', 1.0);
     const imgIde = document.getElementById('chartIde').toDataURL('image/png', 1.0);
 
@@ -303,26 +350,21 @@ async function gerarSumario() {
                 <b>Data:</b> ${new Date().toLocaleDateString()}
             </div>
         </div>
-
         <div class="row mb-5 g-4">
             <div class="col-6">
                 <div class="p-3 border rounded text-center">
-                    <h6 class="fw-bold mb-3 text-primary">Evolução Histórica Proficiência</h6>
-                    <img src="${imgProf}" style="width:100%; height:auto;">
+                    <h6 class="fw-bold mb-3 text-primary">Proficiência Média</h6>
+                    <img src="${imgProf}" style="width:100%;">
                 </div>
             </div>
             <div class="col-6">
                 <div class="p-3 border rounded text-center">
-                    <h6 class="fw-bold mb-3 text-primary">Evolução Histórica IDE</h6>
-                    <img src="${imgIde}" style="width:100%; height:auto;">
+                    <h6 class="fw-bold mb-3 text-primary">IDE Consolidade</h6>
+                    <img src="${imgIde}" style="width:100%;">
                 </div>
             </div>
         </div>
-
-        <div id="pdf-detalhes-area">
-            <h5 class="fw-800 border-bottom pb-2 mb-4"><i class="fas fa-chart-area me-2"></i>Análise por Níveis de Aprendizagem</h5>
-        </div>
-    `;
+        <div id="pdf-detalhes-area"><h5 class="fw-800 border-bottom pb-2 mb-4">Análise por Níveis</h5></div>`;
 
     document.querySelectorAll('#area-niveis .glass-card').forEach(card => {
         const clone = card.cloneNode(true);
@@ -343,10 +385,7 @@ async function exportarPDF() {
     const el = document.getElementById('pdf-content');
     const canvas = await html2canvas(el, { scale: 2, useCORS: true });
     const pdf = new jspdf.jsPDF('p', 'mm', 'a4');
-    const imgWidth = 190;
-    const imgHeight = (canvas.height * imgWidth) / canvas.width;
-    
-    pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 10, 10, imgWidth, imgHeight);
+    pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 10, 10, 190, (canvas.height * 190) / canvas.width);
     pdf.save(`Relatorio_SME_${document.getElementById('hEscola').innerText}.pdf`);
 }
 
