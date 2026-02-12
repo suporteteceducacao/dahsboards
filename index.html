@@ -16,74 +16,67 @@
 
     <style>
         :root { 
-            --primary: #0f172a; --accent: #4f46e5; --bg-app: #f1f5f9; --sidebar-w: 300px; 
+            --primary: #0f172a; --accent: #4f46e5; --bg-app: #f1f5f9; --sidebar-w: 300px;
             --cor-muito-critico: #dc2626; --cor-critico: #ff4500; --cor-interm: #ffff00; --cor-adequado: #22c55e; --cor-desejavel: #006400;
         }
         body { background-color: var(--bg-app); font-family: 'Inter', sans-serif; overflow-x: hidden; }
 
-        /* TELA DE ABERTURA */
+        /* TELA DE ABERTURA - SPLASH */
         #splash-screen {
             position: fixed; inset: 0; z-index: 10000;
-            background: radial-gradient(circle at top right, #4f46e5, #0f172a);
-            display: flex; align-items: center; justify-content: center; color: white;
+            background: #0f172a; display: flex; align-items: center; justify-content: center; color: white;
         }
-        .splash-card { text-align: center; max-width: 400px; padding: 40px; }
+        .splash-content { text-align: center; }
 
         /* SIDEBAR */
         #sidebar { 
             width: var(--sidebar-w); height: 100vh; position: fixed; left: 0; top: 0;
-            background: var(--primary); color: white; transition: 0.3s; z-index: 1050; padding: 20px;
+            background: var(--primary); color: white; transition: 0.3s; z-index: 1050; padding: 25px;
         }
         #sidebar.collapsed { left: calc(var(--sidebar-w) * -1); }
         #content { margin-left: var(--sidebar-w); transition: 0.3s ease; padding: 30px; min-height: 100vh; }
         #content.expanded { margin-left: 0; }
-        .btn-toggle { position: fixed; left: 260px; top: 20px; z-index: 1100; background: white; border: 1px solid #ddd; border-radius: 8px; }
+        
+        /* BOTÃO TOGGLE */
+        .btn-toggle { position: fixed; left: 265px; top: 20px; z-index: 1100; background: white; border: none; border-radius: 8px; padding: 8px 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
         #sidebar.collapsed + .btn-toggle { left: 20px; }
 
-        /* CARDS */
-        .glass-card { background: white; border-radius: 20px; padding: 25px; border: 1px solid #e2e8f0; margin-bottom: 25px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
-        .status-badge { padding: 15px; border-radius: 12px; text-align: center; font-weight: 800; }
+        /* CARDS E NÍVEIS */
+        .glass-card { background: white; border-radius: 15px; padding: 20px; border: 1px solid #e2e8f0; margin-bottom: 20px; }
+        .bg-interm { background: var(--cor-interm) !important; color: #000 !important; font-weight: bold; }
+        .bg-verde-escuro { background: var(--cor-desejavel) !important; color: #fff !important; }
+        .bg-vermelho { background: var(--cor-muito-critico) !important; color: #fff !important; }
 
-        /* CORES NÍVEIS */
-        .bg-muito-critico { background: var(--cor-muito-critico) !important; color: white !important; }
-        .bg-critico { background: var(--cor-critico) !important; color: white !important; }
-        .bg-interm { background: var(--cor-interm) !important; color: black !important; }
-        .bg-adequado { background: var(--cor-adequado) !important; color: white !important; }
-        .bg-desejavel { background: var(--cor-desejavel) !important; color: white !important; }
-
-        .footer-app { padding: 20px; text-align: center; color: #64748b; font-size: 12px; border-top: 1px solid #e2e8f0; margin-top: 40px; }
+        /* DROPDOWN CUSTOM */
+        .search-container { position: relative; margin-bottom: 20px; }
+        #schoolSelect { cursor: pointer; background-color: #1e293b; color: white; border: none; }
         
-        /* SEARCH SUGGESTIONS */
-        #search-results { background: white; color: black; border-radius: 8px; max-height: 200px; overflow-y: auto; position: absolute; width: 90%; z-index: 100; display: none; }
-        .search-item { padding: 10px; cursor: pointer; border-bottom: 1px solid #eee; font-size: 13px; }
-        .search-item:hover { background: #f0f0f0; }
+        .footer-app { padding: 20px; text-align: center; color: #64748b; font-size: 11px; margin-top: 30px; }
     </style>
 </head>
 <body>
 
 <div id="splash-screen">
-    <div class="splash-card">
-        <div class="mb-4"><i class="fas fa-chart-line fa-4x mb-3"></i></div>
+    <div class="splash-content">
         <h1 class="fw-800 mb-2">SPAECE ANALYTICS</h1>
-        <p class="opacity-75 mb-5">Sistema de Gestão de Resultados - Maracanaú</p>
-        
-        <div id="loader-area">
-            <div class="spinner-border text-light mb-3" role="status"></div>
-            <p class="small">Sincronizando base de dados...</p>
+        <p class="text-info mb-4">Maracanaú - Gestão de Dados</p>
+        <div id="status-box">
+            <div class="spinner-border text-light" role="status"></div>
+            <p class="mt-3 small">Carregando base de dados...</p>
         </div>
-        
-        <button id="btnAcessar" class="btn btn-light btn-lg w-100 fw-bold shadow" onclick="mostrarApp()" style="display:none;">ACESSAR PAINEL</button>
+        <button id="btnStart" class="btn btn-primary btn-lg px-5 fw-bold" onclick="iniciar()" style="display:none;">ENTRAR NO SISTEMA</button>
     </div>
 </div>
 
 <div id="app" style="display:none;">
     <aside id="sidebar">
-        <h5 class="fw-800 mb-4 text-center">MARACANAÚ DATA</h5>
+        <h4 class="fw-800 mb-5 text-center">PAINEL</h4>
         
-        <div class="mb-4 position-relative">
-            <label class="small fw-bold opacity-50">BUSCAR ESCOLA</label>
-            <input type="text" id="schoolSearch" class="form-control bg-dark text-white border-0 mt-1" placeholder="Digite o nome..." oninput="filtrarEscolas()">
-            <div id="search-results" class="shadow"></div>
+        <div class="search-container">
+            <label class="small fw-bold opacity-50">SELECIONE A ESCOLA</label>
+            <select id="schoolSelect" class="form-select mt-1 mb-3" onchange="selecionarEscola()">
+                <option value="">Aguardando dados...</option>
+            </select>
         </div>
 
         <div class="mb-4">
@@ -93,51 +86,44 @@
             <select id="selComp" class="form-select bg-dark text-white border-0 mt-1 mb-5" onchange="render()"></select>
         </div>
 
-        <button class="btn btn-info w-100 fw-bold text-white mb-3 shadow-sm" onclick="abrirSumario()"><i class="fas fa-file-pdf me-2"></i>GERAR SUMÁRIO</button>
-        <button class="btn btn-outline-light w-100 btn-sm opacity-50" onclick="location.reload()">RECARREGAR SISTEMA</button>
+        <button class="btn btn-info w-100 fw-bold text-white mb-3" onclick="abrirSumario()">SUMÁRIO EXECUTIVO</button>
+        <button class="btn btn-outline-danger w-100 btn-sm" onclick="location.reload()">SAIR</button>
     </aside>
-    
-    <button class="btn btn-toggle shadow-sm" onclick="toggleMenu()"><i class="fas fa-bars"></i></button>
+
+    <button class="btn btn-toggle" onclick="toggleMenu()"><i class="fas fa-bars"></i></button>
 
     <main id="content">
         <header class="mb-4">
-            <h2 id="hEscola" class="fw-800 text-primary mb-0">Selecione uma Escola</h2>
-            <p id="hInep" class="text-muted fw-bold small">---</p>
+            <h2 id="hEscola" class="fw-800 text-primary">---</h2>
+            <span id="hInep" class="badge bg-secondary">---</span>
         </header>
 
-        <ul class="nav nav-pills mb-4 gap-2">
-            <li class="nav-item"><button class="nav-link active rounded-pill px-4 fw-bold" data-bs-toggle="pill" data-bs-target="#p-prof">PROFICIÊNCIA</button></li>
-            <li class="nav-item"><button class="nav-link rounded-pill px-4 fw-bold" data-bs-toggle="pill" data-bs-target="#p-ide">IDE</button></li>
-            <li class="nav-item"><button class="nav-link rounded-pill px-4 fw-bold" data-bs-toggle="pill" data-bs-target="#p-comp">REDE</button></li>
-            <li class="nav-item"><button class="nav-link rounded-pill px-4 fw-bold" data-bs-toggle="pill" data-bs-target="#p-niveis">NÍVEIS</button></li>
+        <ul class="nav nav-tabs mb-4 border-0 gap-2">
+            <li class="nav-item"><button class="nav-link active fw-bold border-0 rounded-pill" data-bs-toggle="tab" data-bs-target="#t-prof">PROFICIÊNCIA</button></li>
+            <li class="nav-item"><button class="nav-link fw-bold border-0 rounded-pill" data-bs-toggle="tab" data-bs-target="#t-ide">IDE</button></li>
+            <li class="nav-item"><button class="nav-link fw-bold border-0 rounded-pill" data-bs-toggle="tab" data-bs-target="#t-niveis">NÍVEIS</button></li>
         </ul>
 
         <div class="tab-content">
-            <div class="tab-pane fade show active" id="p-prof"><div class="glass-card"><canvas id="chartProf" height="380"></canvas></div></div>
-            <div class="tab-pane fade" id="p-ide"><div class="glass-card"><canvas id="chartIde" height="380"></canvas></div></div>
-            <div class="tab-pane fade" id="p-comp"><div id="gridComparativo"></div></div>
-            <div class="tab-pane fade" id="p-niveis"><div id="gridNiveis"></div></div>
+            <div class="tab-pane fade show active" id="t-prof"><div class="glass-card"><canvas id="chartProf" height="350"></canvas></div></div>
+            <div class="tab-pane fade" id="t-ide"><div class="glass-card"><canvas id="chartIde" height="350"></canvas></div></div>
+            <div class="tab-pane fade" id="t-niveis"><div id="gridNiveis"></div></div>
         </div>
 
         <footer class="footer-app">
-            <b>Secretaria Municipal de Educação de Maracanaú</b><br>
-            Monitoramento de Aprendizagem © 2026
+            © 2026 SME Maracanaú - Todos os direitos reservados.
         </footer>
     </main>
 </div>
 
 <div class="modal fade" id="modalSumario" tabindex="-1">
     <div class="modal-dialog modal-xl">
-        <div class="modal-content border-0">
-            <div class="modal-header bg-primary text-white">
-                <h5 class="modal-title fw-800">RELATÓRIO ESTRUTURADO</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body bg-light" id="sumario-area">
-                <div class="sumario-container mx-auto" id="sumario-content"></div>
+        <div class="modal-content">
+            <div class="modal-body p-0" id="sumario-pdf-area">
+                <div id="sumario-content" style="background: white; padding: 50px;"></div>
             </div>
             <div class="modal-footer">
-                <button class="btn btn-success px-5 fw-bold" onclick="gerarPDF()">SALVAR EM PDF</button>
+                <button class="btn btn-success fw-bold" onclick="gerarPDF()">BAIXAR RELATÓRIO PDF</button>
             </div>
         </div>
     </div>
@@ -146,47 +132,41 @@
 <script>
 const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxj9fSRN5Vsxmf7er8u4dwv3VG1L3Iba2qg24stpzU5gA-pfttuzXgsyK03-hO9PoL_/exec";
 let database = [], chartP = null, chartI = null;
-let escolaSelecionada = null;
 
 async function load() {
     try {
         const r = await fetch(WEB_APP_URL);
         database = await r.json();
-        document.getElementById('loader-area').style.display = 'none';
-        document.getElementById('btnAcessar').style.display = 'block';
-    } catch(e) { 
-        alert("Erro ao carregar dados. Verifique sua conexão."); 
-    }
+        
+        const nomesEscolas = [...new Set(database.map(d => d.ESCOLA || d.NO_MUNICIPIO))].sort();
+        const select = document.getElementById('schoolSelect');
+        select.innerHTML = '<option value="" disabled selected>Escolha uma escola...</option>' + 
+                          nomesEscolas.map(n => `<option value="${n}">${n}</option>`).join('');
+
+        document.getElementById('status-box').style.display = 'none';
+        document.getElementById('btnStart').style.display = 'inline-block';
+    } catch(e) { alert("Erro ao carregar dados."); }
 }
 
-function mostrarApp() {
-    document.getElementById('splash-screen').style.fadeOut = "slow";
-    setTimeout(() => {
-        document.getElementById('splash-screen').style.display = 'none';
-        document.getElementById('app').style.display = 'block';
-    }, 500);
+function iniciar() {
+    document.getElementById('splash-screen').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
 }
 
-function filtrarEscolas() {
-    const termo = document.getElementById('schoolSearch').value.toUpperCase();
-    const lista = document.getElementById('search-results');
-    if (termo.length < 3) { lista.style.display = 'none'; return; }
-
-    const escolas = [...new Set(database.filter(d => (d.ESCOLA || d.NO_MUNICIPIO).includes(termo)).map(d => d.ESCOLA || d.NO_MUNICIPIO))].slice(0, 10);
-    
-    lista.innerHTML = escolas.map(e => `<div class="search-item" onclick="selecionarEscola('${e}')">${e}</div>`).join('');
-    lista.style.display = 'block';
-}
-
-function selecionarEscola(nome) {
-    escolaSelecionada = nome;
-    document.getElementById('schoolSearch').value = nome;
-    document.getElementById('search-results').style.display = 'none';
-    
+function selecionarEscola() {
+    const nome = document.getElementById('schoolSelect').value;
     const filter = database.filter(d => (d.ESCOLA || d.NO_MUNICIPIO) === nome);
     const etapas = [...new Set(filter.map(d => d.ETAPA))].sort();
     document.getElementById('selEtapa').innerHTML = etapas.map(e => `<option>${e}</option>`).join('');
     popularComponentes();
+}
+
+function popularComponentes() {
+    const nome = document.getElementById('schoolSelect').value;
+    const etapa = document.getElementById('selEtapa').value;
+    const comps = [...new Set(database.filter(d => (d.ESCOLA || d.NO_MUNICIPIO) === nome && d.ETAPA === etapa).map(d => d.COMPONENTE_CURRICULAR || d.DISCIPLINA))].sort();
+    document.getElementById('selComp').innerHTML = comps.map(c => `<option>${c}</option>`).join('');
+    render();
 }
 
 function toggleMenu() {
@@ -196,61 +176,33 @@ function toggleMenu() {
 
 function parse(v) { if(!v) return 0; return parseFloat(String(v).replace('%','').replace(',','.')) || 0; }
 
-function popularComponentes() {
-    const etapa = document.getElementById('selEtapa').value;
-    const filter = database.filter(d => (d.ESCOLA || d.NO_MUNICIPIO) === escolaSelecionada && d.ETAPA === etapa);
-    const comps = [...new Set(filter.map(d => d.COMPONENTE_CURRICULAR || d.DISCIPLINA))].sort();
-    document.getElementById('selComp').innerHTML = comps.map(c => `<option>${c}</option>`).join('');
-    render();
-}
-
 function render() {
+    const nome = document.getElementById('schoolSelect').value;
     const etapa = document.getElementById('selEtapa').value;
     const comp = document.getElementById('selComp').value;
-    const rows = database.filter(d => (d.ESCOLA || d.NO_MUNICIPIO) === escolaSelecionada && d.ETAPA === etapa && (d.COMPONENTE_CURRICULAR === comp || d.DISCIPLINA === comp)).sort((a,b) => a.EDICAO - b.EDICAO);
+    const rows = database.filter(d => (d.ESCOLA || d.NO_MUNICIPIO) === nome && d.ETAPA === etapa && (d.COMPONENTE_CURRICULAR === comp || d.DISCIPLINA === comp)).sort((a,b) => a.EDICAO - b.EDICAO);
 
-    document.getElementById('hEscola').innerText = rows[0].ESCOLA || rows[0].NO_MUNICIPIO;
-    document.getElementById('hInep').innerText = `INEP: ${rows[0].INEP_ESC || rows[0].INEP} | ${etapa} | ${comp}`;
+    document.getElementById('hEscola').innerText = nome;
+    document.getElementById('hInep').innerText = `INEP: ${rows[0].INEP_ESC || rows[0].INEP}`;
 
-    renderProf(rows);
-    renderIde(rows);
-    renderRede(rows, etapa, comp);
+    renderCharts(rows);
     renderNiveis([...rows].reverse(), etapa);
 }
 
-function renderProf(rows) {
+function renderCharts(rows) {
     if(chartP) chartP.destroy();
+    if(chartI) chartI.destroy();
+
     chartP = new Chart(document.getElementById('chartProf'), {
         type: 'bar',
         data: { labels: rows.map(r => r.EDICAO), datasets: [{ label: 'Proficiência', data: rows.map(r => parse(r.PROFICIENCIA_MEDIA).toFixed(1)), backgroundColor: '#4f46e5' }] },
-        options: { maintainAspectRatio: false, plugins: { datalabels: { anchor:'end', align:'top' } } }
+        options: { maintainAspectRatio: false }
     });
-}
 
-function renderIde(rows) {
-    if(chartI) chartI.destroy();
     chartI = new Chart(document.getElementById('chartIde'), {
         type: 'line',
-        data: { labels: rows.map(r => r.EDICAO), datasets: [{ label:'IDE', data: rows.map(r => (parse(r.IDE_Alfa) || parse(r.IDE)).toFixed(2)), borderColor: '#006400', tension: 0.3, fill: true, backgroundColor: 'rgba(0,100,0,0.1)' }] },
-        options: { maintainAspectRatio: false, plugins: { datalabels: { align:'top' } } }
-    });
-}
-
-function renderRede(rowsEscola, etapa, comp) {
-    const cont = document.getElementById('gridComparativo');
-    cont.innerHTML = '<h5 class="fw-bold mb-4">Comparativo com a Rede</h5>';
-    const redeGeral = database.filter(d => d.ETAPA === etapa && (d.COMPONENTE_CURRICULAR === comp || d.DISCIPLINA === comp));
-    
-    rowsEscola.slice().reverse().forEach(esc => {
-        const redeAno = redeGeral.filter(r => r.EDICAO === esc.EDICAO);
-        const maracanau = parse(redeAno.find(r => (r.NO_MUNICIPIO || "").includes("MARACANAU"))?.PROFICIENCIA_MEDIA);
-        const diff = parse(esc.PROFICIENCIA_MEDIA) - maracanau;
-        cont.innerHTML += `<div class="glass-card"><div class="row">
-            <div class="col-3"><b>${esc.EDICAO}</b></div>
-            <div class="col-3 text-center">Escola: ${parse(esc.PROFICIENCIA_MEDIA).toFixed(1)}</div>
-            <div class="col-3 text-center">Rede: ${maracanau.toFixed(1)}</div>
-            <div class="col-3 text-center fw-bold ${diff >= 0 ? 'text-success' : 'text-danger'}">${diff > 0 ? '+' : ''}${diff.toFixed(1)}</div>
-        </div></div>`;
+        data: { labels: rows.map(r => r.EDICAO), datasets: [{ label: 'IDE', data: rows.map(r => (parse(r.IDE_Alfa) || parse(r.IDE)).toFixed(2)), borderColor: '#006400', backgroundColor: 'rgba(0,100,0,0.1)', fill: true }] },
+        options: { maintainAspectRatio: false }
     });
 }
 
@@ -258,54 +210,38 @@ function renderNiveis(rows, etapa) {
     const cont = document.getElementById('gridNiveis'); cont.innerHTML = '';
     const isA = etapa.includes('2º');
     rows.forEach((row, i) => {
-        const id = `chartNiv-${i}`;
-        let l = isA ? ['Não Alfab.', 'Incompleta', 'Interm.', 'Sufic.', 'Desej.'] : ['M. Crítico', 'Crítico', 'Interm.', 'Adequado'];
-        let v = isA ? [parse(row.NAO_ALFABETIZADOS), parse(row.ALFABETIZACAO_INCOMPLETA), parse(row.INTERMEDIARIO), parse(row.SUFICIENTE), parse(row.DESEJAVEL)] : [parse(row.MUITO_CRITICO), parse(row.CRITICO), parse(row.INTERMEDIARIO), parse(row.ADEQUADO)];
-        let c = isA ? ['#dc2626', '#ff4500', '#ffff00', '#22c55e', '#006400'] : ['#dc2626', '#ff4500', '#ffff00', '#006400'];
+        const labels = isA ? ['Não Alfab.', 'Incompleta', 'Interm.', 'Sufic.', 'Desej.'] : ['M. Crítico', 'Crítico', 'Interm.', 'Adequado'];
+        const valores = isA ? [parse(row.NAO_ALFABETIZADOS), parse(row.ALFABETIZACAO_INCOMPLETA), parse(row.INTERMEDIARIO), parse(row.SUFICIENTE), parse(row.DESEJAVEL)] : [parse(row.MUITO_CRITICO), parse(row.CRITICO), parse(row.INTERMEDIARIO), parse(row.ADEQUADO)];
+        const cores = isA ? ['#dc2626', '#ff4500', '#ffff00', '#22c55e', '#006400'] : ['#dc2626', '#ff4500', '#ffff00', '#006400'];
         
-        cont.innerHTML += `<div class="glass-card">
-            <h6>Edição ${row.EDICAO}</h6>
-            <div style="height:100px"><canvas id="${id}"></canvas></div>
-        </div>`;
-        
-        setTimeout(() => {
-            new Chart(document.getElementById(id), {
-                type: 'bar', data: { labels: [''], datasets: l.map((lab, idx) => ({ label: lab, data: [v[idx].toFixed(1)], backgroundColor: c[idx] })) },
-                options: { indexAxis: 'y', maintainAspectRatio: false, plugins: { 
-                    legend: { position: 'bottom' },
-                    datalabels: { color: (ctx) => ctx.dataset.backgroundColor === '#ffff00' ? '#000' : '#fff' }
-                }, scales: { x: { stacked: true, display: false }, y: { stacked: true, display: false } } }
-            });
-        }, 300);
+        let html = `<div class="glass-card"><h6>Edição ${row.EDICAO}</h6><div class="row g-1">`;
+        labels.forEach((l, idx) => {
+            let bg = l === 'Interm.' ? 'bg-interm' : (l === 'Adequado' || l === 'Desej.' ? 'bg-verde-escuro' : 'bg-vermelho');
+            html += `<div class="col text-center p-2 border ${bg}" style="font-size:10px">${l}<br><b>${valores[idx].toFixed(1)}%</b></div>`;
+        });
+        cont.innerHTML += html + `</div></div>`;
     });
 }
 
 async function abrirSumario() {
     const area = document.getElementById('sumario-content');
-    // Forçar delay para garantir que os canvas do IDE e Proficiência estejam prontos
-    const imgProf = document.getElementById('chartProf').toDataURL("image/png");
-    const imgIde = document.getElementById('chartIde').toDataURL("image/png");
+    const imgProf = document.getElementById('chartProf').toDataURL();
+    const imgIde = document.getElementById('chartIde').toDataURL();
 
     area.innerHTML = `
-        <div class="text-center mb-5 border-bottom pb-3">
-            <h2 class="fw-800 text-primary">${escolaSelecionada}</h2>
-            <p class="text-muted small">Relatório Consolidado SPAECE Analytics</p>
+        <div style="text-align:center; border-bottom: 2px solid #000; padding-bottom:20px; margin-bottom:30px;">
+            <h2>${document.getElementById('hEscola').innerText}</h2>
+            <h4>Relatório de Desempenho SPAECE</h4>
         </div>
-        <div class="row mb-4">
-            <div class="col-6 text-center"><p class="fw-bold small">Evolução Proficiência</p><img src="${imgProf}" class="img-fluid border rounded shadow-sm"></div>
-            <div class="col-6 text-center"><p class="fw-bold small">Evolução IDE</p><img src="${imgIde}" class="img-fluid border rounded shadow-sm"></div>
+        <div style="display:flex; gap:20px; margin-bottom:40px;">
+            <div style="flex:1"><h5>Proficiência</h5><img src="${imgProf}" style="width:100%; border:1px solid #eee;"></div>
+            <div style="flex:1"><h5>IDE</h5><img src="${imgIde}" style="width:100%; border:1px solid #eee;"></div>
         </div>
-        <div id="sum-niveis"></div>
+        <div id="pdf-niveis"><h5>Resultados por Níveis</h5></div>
     `;
 
     document.querySelectorAll('#gridNiveis .glass-card').forEach(card => {
-        const clone = card.cloneNode(true);
-        const canv = card.querySelector('canvas');
-        const img = document.createElement('img');
-        img.src = canv.toDataURL("image/png");
-        img.className = "img-fluid w-100 mt-2";
-        clone.querySelector('canvas').replaceWith(img);
-        area.querySelector('#sum-niveis').appendChild(clone);
+        area.querySelector('#pdf-niveis').appendChild(card.cloneNode(true));
     });
 
     new bootstrap.Modal(document.getElementById('modalSumario')).show();
@@ -316,7 +252,7 @@ async function gerarPDF() {
     const canvas = await html2canvas(el, { scale: 2 });
     const pdf = new jspdf.jsPDF('p', 'mm', 'a4');
     pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, 210, (canvas.height * 210) / canvas.width);
-    pdf.save(`Relatorio_${escolaSelecionada}.pdf`);
+    pdf.save("Relatorio_SPAECE.pdf");
 }
 
 window.onload = load;
