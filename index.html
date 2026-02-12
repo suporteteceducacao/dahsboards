@@ -7,7 +7,7 @@
     
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;800&family=OpenDyslexic&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&family=OpenDyslexic&display=swap" rel="stylesheet">
     
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
@@ -17,142 +17,164 @@
     <style>
         :root { --primary: #0f172a; --accent: #4f46e5; --sidebar-w: 280px; --bg-app: #f8fafc; --text-main: #0f172a; }
         body.dark-mode { --bg-app: #0f172a; --text-main: #f8fafc; }
-        body.dark-mode .glass-card { background: #1e293b; border-color: #334155; color: white; }
         body.dyslexic { font-family: 'OpenDyslexic', sans-serif !important; }
-        body { background-color: var(--bg-app); color: var(--text-main); font-family: 'Inter', sans-serif; overflow-x: hidden; transition: 0.3s; }
+        body { background-color: var(--bg-app); color: var(--text-main); font-family: 'Plus Jakarta Sans', sans-serif; transition: 0.3s; }
 
         /* --- LOGIN MODERNO --- */
         #login-overlay { position: fixed; inset: 0; z-index: 9999; background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%); display: flex; align-items: center; justify-content: center; }
-        .login-box { background: rgba(255,255,255,0.95); padding: 40px; border-radius: 24px; width: 400px; text-align: center; box-shadow: 0 20px 25px rgba(0,0,0,0.3); }
-        
-        /* --- LOADING SCREEN --- */
+        .login-box { background: rgba(255,255,255,0.95); padding: 40px; border-radius: 32px; width: 420px; text-align: center; box-shadow: 0 25px 50px rgba(0,0,0,0.5); backdrop-filter: blur(10px); }
+        .login-logo { width: 70px; height: 70px; background: var(--accent); color: white; border-radius: 20px; display: flex; align-items: center; justify-content: center; font-size: 28px; margin: 0 auto 20px; }
+
+        /* --- LOADING --- */
         #loading-screen { position: fixed; inset: 0; z-index: 9998; background: var(--bg-app); display: none; flex-direction: column; align-items: center; justify-content: center; }
-        .spinner { width: 50px; height: 50px; border: 5px solid #e2e8f0; border-top-color: var(--accent); border-radius: 50%; animation: spin 1s linear infinite; }
+        .loader-spin { width: 50px; height: 50px; border: 5px solid #e2e8f0; border-top-color: var(--accent); border-radius: 50%; animation: spin 1s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
 
-        /* --- LAYOUT DASHBOARD --- */
-        .acc-bar { position: fixed; top: 15px; right: 20px; z-index: 1050; background: white; padding: 5px 15px; border-radius: 50px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); display: flex; gap: 10px; border: 1px solid #e2e8f0; }
-        .acc-btn { border: none; background: none; color: #64748b; cursor: pointer; font-size: 18px; padding: 5px; }
+        /* --- DASHBOARD --- */
+        #sidebar { width: var(--sidebar-w); height: 100vh; position: fixed; top:0; left: 0; background: var(--primary); color: white; padding: 25px; z-index: 1000; }
+        #content { margin-left: var(--sidebar-w); padding: 40px; min-height: 100vh; }
         
-        #sidebar { width: var(--sidebar-w); height: 100vh; position: fixed; top:0; left: 0; background: var(--primary); color: white; transition: 0.3s; z-index: 1000; padding: 20px; }
-        #sidebar.collapsed { left: calc(var(--sidebar-w) * -1); }
-        .btn-toggle { position: fixed; left: 235px; top: 15px; z-index: 1100; background: var(--accent); color: white; border: none; border-radius: 8px; width: 40px; height: 40px; display: none; align-items: center; justify-content: center; }
-        #content { margin-left: var(--sidebar-w); padding: 40px; min-height: 100vh; transition: 0.3s; }
-        #content.expanded { margin-left: 0; }
+        .glass-card { background: white; border-radius: 20px; padding: 25px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; margin-bottom: 25px; position: relative; }
+        .btn-png { position: absolute; top: 15px; right: 15px; font-size: 11px; font-weight: 800; border: 1px solid #e2e8f0; background: white; color: var(--accent); border-radius: 8px; cursor: pointer; }
 
-        .glass-card { background: white; border-radius: 20px; padding: 25px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 25px; border: 1px solid #e2e8f0; position: relative; }
-        .btn-png { position: absolute; top: 15px; right: 15px; font-size: 11px; font-weight: 800; padding: 5px 12px; border-radius: 8px; border: 1px solid #e2e8f0; background: white; color: #4f46e5; cursor: pointer; }
+        /* KPI Cards */
+        .kpi-box { text-align: center; padding: 15px; border-radius: 15px; background: #f8fafc; border: 1px solid #e2e8f0; }
+        .val-badge { padding: 4px 12px; border-radius: 50px; font-weight: 800; font-size: 13px; }
         
-        /* Cores de Cards de Desempenho */
-        .card-critico { background: #ef4444; color: white; }
-        .card-alerta { background: #facc15; color: #000; }
-        .card-bom { background: #86efac; color: #000; }
-        .card-excelente { background: #166534; color: white; }
-        .val-pill { padding: 6px 14px; border-radius: 20px; font-weight: 800; font-size: 14px; display: inline-block; margin-top: 5px; }
-        .val-esc { background: #eef2ff; color: #4338ca; }
-        .val-mun { background: #f0fdf4; color: #15803d; }
+        /* Modal do Sumário */
+        .modal-xl { max-width: 90% !important; }
+        #sumario-print-area { padding: 30px; background: white; color: #000; }
     </style>
 </head>
 <body>
 
 <div id="login-overlay">
     <div class="login-box">
-        <h3 class="fw-800 mb-4">SPAECE DASHBOARD</h3>
-        <input type="text" id="inepInput" class="form-control text-center mb-3" placeholder="Código INEP">
-        <button class="btn btn-primary w-100 fw-bold" onclick="entrar()">ACESSAR</button>
-        <div id="login-status" class="small mt-3 text-muted">Conectando à planilha...</div>
+        <div class="login-logo"><i class="fas fa-chart-line"></i></div>
+        <h2 class="fw-800">SPAECE Analytics</h2>
+        <p class="text-muted">Entre com o código INEP da Unidade</p>
+        <div class="mb-3">
+            <input type="text" id="inepInput" class="form-control form-control-lg text-center shadow-sm" placeholder="Ex: 23000000" style="border-radius:15px">
+        </div>
+        <button class="btn btn-primary btn-lg w-100 fw-bold shadow" onclick="entrar()" style="border-radius:15px">ACESSAR PAINEL</button>
+        <div id="login-status" class="small mt-3 text-muted">Carregando base de dados...</div>
     </div>
 </div>
 
 <div id="loading-screen">
-    <div class="spinner mb-3"></div>
-    <h5 class="fw-bold">Processando dados da escola...</h5>
+    <div class="loader-spin mb-3"></div>
+    <h5 class="fw-bold">Consolidando informações...</h5>
 </div>
 
 <div id="app" style="display:none;">
-    <div class="acc-bar">
-        <button class="acc-btn" onclick="alterarFonte(1)"><i class="fas fa-plus"></i></button>
-        <button class="acc-btn" onclick="alterarFonte(-1)"><i class="fas fa-minus"></i></button>
-        <button class="acc-btn" onclick="toggleDyslexic()"><i class="fas fa-font"></i></button>
-        <button class="acc-btn" onclick="toggleDarkMode()"><i class="fas fa-moon"></i></button>
-    </div>
-
     <aside id="sidebar">
-        <div class="mt-4 text-center mb-5"><h5 class="fw-800">ANALYTICS V14.4</h5></div>
-        <label class="small fw-bold text-white-50">ETAPA</label>
-        <select id="selEtapa" class="form-select bg-dark text-white border-0 mb-4" onchange="popularComponentes()"></select>
-        <label class="small fw-bold text-white-50">COMPONENTE</label>
-        <select id="selComp" class="form-select bg-dark text-white border-0 mb-5" onchange="render()"></select>
-        <button class="btn btn-danger w-100 fw-bold mb-2 shadow-sm" onclick="location.reload()">NOVA CONSULTA</button>
-        <button class="btn btn-success w-100 fw-bold shadow-sm" onclick="gerarPDF()">GERAR PDF</button>
+        <div class="mb-5 text-center"><h5 class="fw-800">DATA SPAECE</h5><small class="opacity-50">Versão 14.4 Live</small></div>
+        
+        <div class="mb-4">
+            <label class="small fw-bold text-white-50">ETAPA DE ENSINO</label>
+            <select id="selEtapa" class="form-select bg-dark text-white border-0" onchange="popularComponentes()"></select>
+        </div>
+        
+        <div class="mb-5">
+            <label class="small fw-bold text-white-50">COMPONENTE</label>
+            <select id="selComp" class="form-select bg-dark text-white border-0" onchange="render()"></select>
+        </div>
+
+        <button class="btn btn-info w-100 fw-bold mb-3 text-white" onclick="abrirSumario()">
+            <i class="fas fa-file-invoice"></i> SUMÁRIO EXECUTIVO
+        </button>
+        
+        <button class="btn btn-outline-danger w-100 fw-bold" onclick="location.reload()">NOVA CONSULTA</button>
     </aside>
 
     <main id="content">
-        <header class="mb-4">
-            <h2 id="hEscola" class="fw-800 text-primary mb-0">---</h2>
-            <p id="hInep" class="text-muted mb-0">---</p>
+        <header class="d-flex justify-content-between align-items-start mb-4">
+            <div>
+                <h2 id="hEscola" class="fw-800 text-primary mb-0">---</h2>
+                <p id="hInep" class="text-muted fw-bold">---</p>
+            </div>
+            <div class="d-flex gap-2">
+                <button class="btn btn-light shadow-sm" onclick="toggleDarkMode()"><i class="fas fa-moon"></i></button>
+                <button class="btn btn-light shadow-sm" onclick="toggleDyslexic()"><i class="fas fa-font"></i></button>
+            </div>
         </header>
 
-        <ul class="nav nav-pills mb-4" id="pills-tab">
-            <li class="nav-item"><button class="nav-link active" data-bs-toggle="pill" data-bs-target="#p-prof">PROFICIÊNCIA</button></li>
-            <li class="nav-item"><button class="nav-link" data-bs-toggle="pill" data-bs-target="#p-ide">INDICADOR IDE</button></li>
-            <li class="nav-item"><button class="nav-link" data-bs-toggle="pill" data-bs-target="#p-comp">REDE</button></li>
-            <li class="nav-item"><button class="nav-link" data-bs-toggle="pill" data-bs-target="#p-niveis">NÍVEIS</button></li>
-            <li class="nav-item"><button class="nav-link" data-bs-toggle="pill" data-bs-target="#p-hist">HISTÓRICO</button></li>
+        <ul class="nav nav-tabs mb-4 border-0" id="tabs-painel" role="tablist">
+            <li class="nav-item"><button class="nav-link active fw-bold border-0" data-bs-toggle="tab" data-bs-target="#tab-prof">PROFICIÊNCIA</button></li>
+            <li class="nav-item"><button class="nav-link fw-bold border-0" data-bs-toggle="tab" data-bs-target="#tab-ide">INDICADOR IDE</button></li>
+            <li class="nav-item"><button class="nav-link fw-bold border-0" data-bs-toggle="tab" data-bs-target="#tab-rede">REDE</button></li>
+            <li class="nav-item"><button class="nav-link fw-bold border-0" data-bs-toggle="tab" data-bs-target="#tab-niveis">NÍVEIS</button></li>
+            <li class="nav-item"><button class="nav-link fw-bold border-0" data-bs-toggle="tab" data-bs-target="#tab-hist">HISTÓRICO</button></li>
         </ul>
 
         <div class="tab-content">
-            <div class="tab-pane fade show active" id="p-prof">
-                <div class="glass-card" id="c-prof">
-                    <button class="btn-png" onclick="baixarPNG('c-prof','Proficiencia')">PNG</button>
-                    <h5 class="fw-bold mb-4">Proficiência Média</h5>
-                    <div style="height:350px"><canvas id="chartProf"></canvas></div>
+            <div class="tab-pane fade show active" id="tab-prof">
+                <div class="glass-card" id="print-prof">
+                    <button class="btn-png" onclick="baixarPNG('print-prof','Proficiencia')">PNG</button>
+                    <h5 class="fw-bold mb-4">Evolução da Proficiência Média</h5>
+                    <div style="height:380px"><canvas id="chartProf"></canvas></div>
                 </div>
             </div>
-            <div class="tab-pane fade" id="p-ide">
-                <div class="glass-card" id="c-ide">
-                    <button class="btn-png" onclick="baixarPNG('c-ide','IDE')">PNG</button>
-                    <h5 id="titleIde" class="fw-bold mb-4">Evolução IDE</h5>
-                    <div style="height:350px"><canvas id="chartIde"></canvas></div>
+            <div class="tab-pane fade" id="tab-ide">
+                <div class="glass-card" id="print-ide">
+                    <button class="btn-png" onclick="baixarPNG('print-ide','IDE')">PNG</button>
+                    <h5 class="fw-bold mb-4">Evolução do IDE</h5>
+                    <div style="height:380px"><canvas id="chartIde"></canvas></div>
                 </div>
             </div>
-            <div class="tab-pane fade" id="p-comp"><div id="gridComparativo"></div></div>
-            <div class="tab-pane fade" id="p-niveis"><div id="gridNiveis"></div></div>
-            <div class="tab-pane fade" id="p-hist"><div id="gridHistorico"></div></div>
+            <div class="tab-pane fade" id="tab-rede"><div id="gridComparativo"></div></div>
+            <div class="tab-pane fade" id="tab-niveis"><div id="gridNiveis"></div></div>
+            <div class="tab-pane fade" id="tab-hist"><div id="gridHistorico"></div></div>
         </div>
     </main>
 </div>
 
+<div class="modal fade" id="modalSumario" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content" style="border-radius:25px; overflow:hidden">
+            <div class="modal-header border-0 bg-light p-4">
+                <h4 class="modal-title fw-800"><i class="fas fa-file-contract text-primary me-2"></i>Sumário Executivo Consolidado</h4>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-0">
+                <div id="sumario-print-area">
+                    </div>
+            </div>
+            <div class="modal-footer border-0 p-4">
+                <button class="btn btn-secondary fw-bold" data-bs-dismiss="modal">FECHAR</button>
+                <button class="btn btn-success fw-bold px-4" onclick="gerarPDFSumario()">
+                    <i class="fas fa-download me-2"></i>BAIXAR PDF COMPLETO
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
 const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxj9fSRN5Vsxmf7er8u4dwv3VG1L3Iba2qg24stpzU5gA-pfttuzXgsyK03-hO9PoL_/exec";
-
 let database = [];
 let chartP = null, chartI = null;
-let fontSize = 16;
 Chart.register(ChartDataLabels);
 
-// ACESSIBILIDADE
-function alterarFonte(v) { fontSize += v; document.body.style.fontSize = fontSize + 'px'; }
-function toggleDyslexic() { document.body.classList.toggle('dyslexic'); }
-function toggleDarkMode() { document.body.classList.toggle('dark-mode'); }
-
-// CARREGAR DADOS INICIAIS
+// Inicialização
 async function init() {
     try {
         const r = await fetch(WEB_APP_URL);
         database = await r.json();
-        document.getElementById('login-status').innerText = "Conexão estabelecida!";
+        document.getElementById('login-status').innerText = "✓ Base de dados sincronizada!";
     } catch(e) {
-        document.getElementById('login-status').innerText = "Erro ao carregar planilha!";
+        document.getElementById('login-status').innerText = "Erro ao carregar dados.";
     }
 }
+
+function toggleDarkMode() { document.body.classList.toggle('dark-mode'); }
+function toggleDyslexic() { document.body.classList.toggle('dyslexic'); }
 
 function entrar() {
     const inep = document.getElementById('inepInput').value.trim();
     const rows = database.filter(d => String(d.INEP_ESC || d.INEP) === inep);
 
     if(rows.length > 0) {
-        // Mostrar Loading
         document.getElementById('login-overlay').style.display = 'none';
         document.getElementById('loading-screen').style.display = 'flex';
 
@@ -163,7 +185,7 @@ function entrar() {
             const etapas = [...new Set(rows.map(d => d.ETAPA))].sort();
             document.getElementById('selEtapa').innerHTML = etapas.map(e => `<option>${e}</option>`).join('');
             popularComponentes();
-        }, 1500); // 1.5s de animação de loading
+        }, 1200);
     } else {
         alert("INEP não encontrado!");
     }
@@ -179,6 +201,7 @@ function popularComponentes() {
 
 function parse(v) { if(!v) return 0; return parseFloat(String(v).replace('%','').replace(',','.')) || 0; }
 
+// --- RENDERIZAÇÃO DAS ABAS ---
 function render() {
     const inep = document.getElementById('inepInput').value;
     const etapa = document.getElementById('selEtapa').value;
@@ -188,82 +211,109 @@ function render() {
     document.getElementById('hEscola').innerText = rows[0].ESCOLA || rows[0].MUNICIPIO;
     document.getElementById('hInep').innerText = `INEP: ${inep} | ${etapa} | ${comp}`;
 
-    renderProf(rows);
-    renderIde(rows, etapa, comp);
-    renderComparacao(rows, etapa, comp);
-    renderNiveis([...rows].reverse(), etapa);
-    renderHistorico([...rows].reverse());
+    renderGrants(rows);
+    renderRede(rows, etapa, comp);
+    renderNiveis(rows, etapa);
+    renderHistorico(rows);
 }
 
-// --- FUNÇÕES DE GRÁFICOS (Recuperadas do original) ---
-
-function renderProf(rows) {
+function renderGrants(rows) {
     if(chartP) chartP.destroy();
+    if(chartI) chartI.destroy();
+
     chartP = new Chart(document.getElementById('chartProf'), {
         type: 'bar',
-        data: { labels: rows.map(r => r.EDICAO), datasets: [{ data: rows.map(r => Math.round(parse(r.PROFICIENCIA_MEDIA))), backgroundColor: '#4f46e5', borderRadius: 8 }] },
-        options: { maintainAspectRatio: false, plugins: { legend: {display:false}, datalabels: { anchor:'end', align:'top', font:{weight:'800'}, formatter: Math.round } } }
+        data: { labels: rows.map(r => r.EDICAO), datasets: [{ label: 'Proficiência', data: rows.map(r => Math.round(parse(r.PROFICIENCIA_MEDIA))), backgroundColor: '#4f46e5', borderRadius: 10 }] },
+        options: { maintainAspectRatio: false, plugins: { datalabels: { anchor:'end', align:'top', font:{weight:'bold'} } } }
     });
-}
 
-function renderIde(rows, etapa, comp) {
-    if(chartI) chartI.destroy();
-    let valIde = rows.map(r => parse(r.IDE_Alfa) || parse(r.IDE) || 0);
     chartI = new Chart(document.getElementById('chartIde'), {
         type: 'line',
-        data: { labels: rows.map(r => r.EDICAO), datasets: [{ data: valIde, borderColor: '#10b981', tension: 0.3, pointRadius: 6 }] },
-        options: { maintainAspectRatio: false, plugins: { legend: {display:false}, datalabels: { formatter: v => v.toFixed(2) } } }
+        data: { labels: rows.map(r => r.EDICAO), datasets: [{ label: 'IDE', data: rows.map(r => parse(r.IDE_Alfa) || parse(r.IDE) || 0), borderColor: '#10b981', pointRadius: 5, fill: true, backgroundColor: 'rgba(16, 185, 129, 0.1)' }] },
+        options: { maintainAspectRatio: false, plugins: { datalabels: { formatter: v => v.toFixed(2) } } }
     });
 }
 
-function renderComparacao(rowsEscola, etapa, comp) {
+function renderRede(rows, etapa, comp) {
     const cont = document.getElementById('gridComparativo');
-    cont.innerHTML = '<h5 class="fw-bold mb-4">Diferença em relação à Rede</h5>';
-    const rowsGeral = database.filter(d => d.ETAPA === etapa && (d.COMPONENTE_CURRICULAR === comp || d.DISCIPLINA === comp));
-    
-    [...new Set(rowsEscola.map(r => r.EDICAO))].sort((a,b) => b-a).forEach(ano => {
-        const esc = rowsEscola.find(r => r.EDICAO === ano);
-        const valEsc = parse(esc.PROFICIENCIA_MEDIA);
-        const valMun = 200; // Aqui você pode calcular a média real da rede se desejar
+    cont.innerHTML = '<h5 class="fw-bold mb-4">Desempenho Escola vs Rede</h5>';
+    rows.slice().reverse().forEach(row => {
+        const valEsc = parse(row.PROFICIENCIA_MEDIA);
+        const valMun = 200; // Valor simulado para a média da rede
         const diff = (valEsc - valMun).toFixed(1);
-        
-        cont.innerHTML += `<div class="glass-card"><div class="row align-items-center"><div class="col-8"><b>EDIÇÃO ${ano}</b><br>Escola: <span class="val-pill val-esc">${valEsc.toFixed(1)}</span> Rede: <span class="val-pill val-mun">${valMun}</span></div><div class="col-4 text-end text-${diff>=0?'success':'danger'} fw-bold">DIF: ${diff} pts</div></div></div>`;
+        cont.innerHTML += `<div class="glass-card"><div class="row align-items-center"><div class="col-md-9"><h6>Edição ${row.EDICAO}</h6>Sua Escola: <span class="val-badge val-esc">${valEsc.toFixed(1)}</span> | Rede: <span class="val-badge val-mun">${valMun}</span></div><div class="col-md-3 text-end"><span class="badge ${diff>=0?'bg-success':'bg-danger'} p-2">DIF: ${diff} pts</span></div></div></div>`;
     });
 }
 
 function renderNiveis(rows, etapa) {
     const cont = document.getElementById('gridNiveis'); cont.innerHTML = '';
-    rows.forEach((row, i) => {
-        const id = `cn-${i}`;
-        let soma = etapa.includes('2º') ? (parse(row.SUFICIENTE) + parse(row.DESEJAVEL)) : (parse(row.INTERMEDIARIO) + parse(row.ADEQUADO));
-        let cor = soma > 70 ? 'card-excelente' : (soma > 50 ? 'card-bom' : 'card-alerta');
-        
-        cont.innerHTML += `<div class="glass-card ${cor}"><div class="row"><div class="col-8"><b>EDIÇÃO ${row.EDICAO}</b><br>Soma Níveis Satisfatórios</div><div class="col-4 text-end"><h2>${Math.round(soma)}%</h2></div></div></div>`;
+    const isAlfa = etapa.includes('2º');
+    rows.slice().reverse().forEach(row => {
+        let soma = isAlfa ? (parse(row.SUFICIENTE) + parse(row.DESEJAVEL)) : (parse(row.INTERMEDIARIO) + parse(row.ADEQUADO));
+        cont.innerHTML += `<div class="glass-card"><div class="row"><div class="col-8"><h6>Edição ${row.EDICAO}</h6><small class="text-muted">Alunos no nível satisfatório</small></div><div class="col-4 text-end"><h2 class="fw-800 text-primary">${Math.round(soma)}%</h2></div></div></div>`;
     });
 }
 
 function renderHistorico(rows) {
     const cont = document.getElementById('gridHistorico');
     cont.innerHTML = '<h5 class="fw-bold mb-4">Evolução Histórica</h5>';
-    for(let i = 0; i < rows.length - 1; i++) {
-        const diff = Math.round(parse(rows[i].PROFICIENCIA_MEDIA)) - Math.round(parse(rows[i+1].PROFICIENCIA_MEDIA));
-        cont.innerHTML += `<div class="glass-card"><b>${rows[i+1].EDICAO} → ${rows[i].EDICAO}</b>: <span class="text-${diff>=0?'success':'danger'}">${diff > 0 ? '+':''}${diff} pontos</span></div>`;
+    for(let i = rows.length - 1; i > 0; i--) {
+        const diff = parse(rows[i].PROFICIENCIA_MEDIA) - parse(rows[i-1].PROFICIENCIA_MEDIA);
+        cont.innerHTML += `<div class="glass-card d-flex justify-content-between align-items-center"><span><b>${rows[i-1].EDICAO} → ${rows[i].EDICAO}</b></span><span class="fw-bold ${diff>=0?'text-success':'text-danger'}">${diff > 0 ? '+':''}${diff.toFixed(1)} pts</span></div>`;
     }
 }
 
-async function baixarPNG(id, n) { 
-    const canvas = await html2canvas(document.getElementById(id)); 
-    const link = document.createElement('a'); link.download = `${n}.png`; link.href = canvas.toDataURL(); link.click(); 
+// --- SUMÁRIO EXECUTIVO ---
+function abrirSumario() {
+    const inep = document.getElementById('inepInput').value;
+    const etapa = document.getElementById('selEtapa').value;
+    const comp = document.getElementById('selComp').value;
+    const rows = database.filter(d => String(d.INEP_ESC || d.INEP) === inep && d.ETAPA === etapa && (d.COMPONENTE_CURRICULAR === comp || d.DISCIPLINA === comp)).sort((a,b) => a.EDICAO - b.EDICAO);
+    
+    const ultima = rows[rows.length-1];
+    const penultima = rows[rows.length-2];
+    const diff = penultima ? (parse(ultima.PROFICIENCIA_MEDIA) - parse(penultima.PROFICIENCIA_MEDIA)).toFixed(1) : "0";
+
+    const html = `
+        <div class="text-center mb-5">
+            <h1 class="fw-800">SUMÁRIO EXECUTIVO SPAECE</h1>
+            <h4 class="text-primary">${ultima.ESCOLA || ultima.MUNICIPIO}</h4>
+            <p>INEP: ${inep} | ${etapa} | ${comp}</p>
+        </div>
+        <div class="row g-4 mb-5">
+            <div class="col-md-4"><div class="kpi-box"><h6>PROFICIÊNCIA ATUAL</h6><h2 class="fw-800">${parse(ultima.PROFICIENCIA_MEDIA).toFixed(1)}</h2></div></div>
+            <div class="col-md-4"><div class="kpi-box"><h6>IDE ${ultima.EDICAO}</h6><h2 class="fw-800">${(parse(ultima.IDE_Alfa) || parse(ultima.IDE) || 0).toFixed(2)}</h2></div></div>
+            <div class="col-md-4"><div class="kpi-box"><h6>VARIAÇÃO SÉRIE</h6><h2 class="fw-800 ${diff>=0?'text-success':'text-danger'}">${diff > 0 ? '+':''}${diff}</h2></div></div>
+        </div>
+        <div class="glass-card bg-light border-0">
+            <h5 class="fw-bold mb-3">Principais Conclusões:</h5>
+            <p>1. Na última avaliação (${ultima.EDICAO}), a escola obteve proficiência de ${parse(ultima.PROFICIENCIA_MEDIA).toFixed(1)}.</p>
+            <p>2. O indicador de desempenho (IDE) consolidou-se em ${(parse(ultima.IDE_Alfa) || parse(ultima.IDE) || 0).toFixed(2)}.</p>
+            <p>3. A variação em relação ao ano anterior foi de ${diff} pontos.</p>
+        </div>
+        <div class="text-center mt-5 small text-muted">Documento gerado automaticamente pelo Dashboard SPAECE Live.</div>
+    `;
+    
+    document.getElementById('sumario-print-area').innerHTML = html;
+    new bootstrap.Modal(document.getElementById('modalSumario')).show();
 }
 
-async function gerarPDF() {
-    const c = await html2canvas(document.getElementById('content'));
-    const d = new jspdf.jsPDF('p', 'mm', 'a4');
-    d.addImage(c.toDataURL('image/png'), 'PNG', 10, 10, 190, (c.height * 190) / c.width);
-    d.save('Relatorio.pdf');
+async function gerarPDFSumario() {
+    const area = document.getElementById('sumario-print-area');
+    const canvas = await html2canvas(area, { scale: 2 });
+    const imgData = canvas.toDataURL('image/png');
+    const pdf = new jspdf.jsPDF('p', 'mm', 'a4');
+    pdf.addImage(imgData, 'PNG', 10, 10, 190, (canvas.height * 190) / canvas.width);
+    pdf.save('Sumario_Executivo_SPAECE.pdf');
+}
+
+async function baixarPNG(id, n) {
+    const canvas = await html2canvas(document.getElementById(id));
+    const link = document.createElement('a'); link.download = `${n}.png`; link.href = canvas.toDataURL(); link.click();
 }
 
 window.onload = init;
 </script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
