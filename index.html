@@ -15,93 +15,94 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
     <style>
-        :root { --primary: #0f172a; --accent: #4f46e5; --bg-app: #f1f5f9; --sidebar-w: 280px; }
+        :root { 
+            --primary: #0f172a; --accent: #4f46e5; --bg-app: #f1f5f9; --sidebar-w: 300px; 
+            --cor-muito-critico: #dc2626; --cor-critico: #ff4500; --cor-interm: #ffff00; --cor-adequado: #22c55e; --cor-desejavel: #006400;
+        }
         body { background-color: var(--bg-app); font-family: 'Inter', sans-serif; overflow-x: hidden; }
 
-        /* LOGIN ROBUSTO */
-        #login-overlay { 
-            position: fixed; inset: 0; z-index: 10000; 
+        /* TELA DE ABERTURA */
+        #splash-screen {
+            position: fixed; inset: 0; z-index: 10000;
             background: radial-gradient(circle at top right, #4f46e5, #0f172a);
-            display: flex; align-items: center; justify-content: center;
+            display: flex; align-items: center; justify-content: center; color: white;
         }
-        .login-card { 
-            background: white; padding: 40px; border-radius: 28px; width: 100%; max-width: 420px; 
-            box-shadow: 0 25px 50px rgba(0,0,0,0.4); text-align: center;
-        }
+        .splash-card { text-align: center; max-width: 400px; padding: 40px; }
 
-        /* LOADING */
-        #loading-screen {
-            position: fixed; inset: 0; z-index: 9999; background: white;
-            display: none; flex-direction: column; align-items: center; justify-content: center;
-        }
-        .spinner { width: 50px; height: 50px; border: 5px solid #f3f3f3; border-top: 5px solid var(--accent); border-radius: 50%; animation: spin 1s linear infinite; }
-        @keyframes spin { to { transform: rotate(360deg); } }
-
-        /* SIDEBAR RETRÁTIL */
+        /* SIDEBAR */
         #sidebar { 
             width: var(--sidebar-w); height: 100vh; position: fixed; left: 0; top: 0;
-            background: var(--primary); color: white; transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1); z-index: 1050; padding: 25px;
+            background: var(--primary); color: white; transition: 0.3s; z-index: 1050; padding: 20px;
         }
         #sidebar.collapsed { left: calc(var(--sidebar-w) * -1); }
         #content { margin-left: var(--sidebar-w); transition: 0.3s ease; padding: 30px; min-height: 100vh; }
         #content.expanded { margin-left: 0; }
-        .btn-toggle { position: fixed; left: 240px; top: 20px; z-index: 1100; transition: 0.3s; background: white; border: 1px solid #ddd; border-radius: 8px; }
+        .btn-toggle { position: fixed; left: 260px; top: 20px; z-index: 1100; background: white; border: 1px solid #ddd; border-radius: 8px; }
         #sidebar.collapsed + .btn-toggle { left: 20px; }
 
-        /* CARDS E GRÁFICOS */
+        /* CARDS */
         .glass-card { background: white; border-radius: 20px; padding: 25px; border: 1px solid #e2e8f0; margin-bottom: 25px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
-        
-        /* CORES DE STATUS (AUMENTO DE CONTRASTE) */
-        .status-badge { padding: 12px; border-radius: 12px; text-align: center; font-weight: 800; border: 1px solid rgba(0,0,0,0.1); }
-        .bg-critico { background: #dc2626 !important; color: white !important; }
-        .bg-alerta { background: #facc15 !important; color: #000 !important; }
-        .bg-bom { background: #22c55e !important; color: white !important; }
-        .bg-excelente { background: #1e3a8a !important; color: white !important; }
+        .status-badge { padding: 15px; border-radius: 12px; text-align: center; font-weight: 800; }
+
+        /* CORES NÍVEIS */
+        .bg-muito-critico { background: var(--cor-muito-critico) !important; color: white !important; }
+        .bg-critico { background: var(--cor-critico) !important; color: white !important; }
+        .bg-interm { background: var(--cor-interm) !important; color: black !important; }
+        .bg-adequado { background: var(--cor-adequado) !important; color: white !important; }
+        .bg-desejavel { background: var(--cor-desejavel) !important; color: white !important; }
 
         .footer-app { padding: 20px; text-align: center; color: #64748b; font-size: 12px; border-top: 1px solid #e2e8f0; margin-top: 40px; }
-
-        /* ESTILO SUMÁRIO */
-        .sumario-container { background: white; padding: 40px; border-radius: 10px; }
-        .sumario-header { border-bottom: 3px solid var(--primary); padding-bottom: 20px; margin-bottom: 30px; }
+        
+        /* SEARCH SUGGESTIONS */
+        #search-results { background: white; color: black; border-radius: 8px; max-height: 200px; overflow-y: auto; position: absolute; width: 90%; z-index: 100; display: none; }
+        .search-item { padding: 10px; cursor: pointer; border-bottom: 1px solid #eee; font-size: 13px; }
+        .search-item:hover { background: #f0f0f0; }
     </style>
 </head>
 <body>
 
-<div id="login-overlay">
-    <div class="login-card">
-        <div class="mb-4"><i class="fas fa-chart-pie fa-3x text-primary"></i></div>
-        <h3 class="fw-800 mb-1">SPAECE ANALYTICS</h3>
-        <p class="text-muted small mb-4">Maracanaú - Conectando Dados Educacionais</p>
-        <div id="db-status" class="alert alert-warning py-2 small"><i class="fas fa-sync fa-spin me-2"></i>Conectando à base...</div>
-        <input type="text" id="inepInput" class="form-control mb-3 text-center py-2" placeholder="Digite o INEP da Escola">
-        <button id="btnEntrar" class="btn btn-primary w-100 fw-bold py-2" onclick="entrar()" disabled>ACESSAR DASHBOARD</button>
+<div id="splash-screen">
+    <div class="splash-card">
+        <div class="mb-4"><i class="fas fa-chart-line fa-4x mb-3"></i></div>
+        <h1 class="fw-800 mb-2">SPAECE ANALYTICS</h1>
+        <p class="opacity-75 mb-5">Sistema de Gestão de Resultados - Maracanaú</p>
+        
+        <div id="loader-area">
+            <div class="spinner-border text-light mb-3" role="status"></div>
+            <p class="small">Sincronizando base de dados...</p>
+        </div>
+        
+        <button id="btnAcessar" class="btn btn-light btn-lg w-100 fw-bold shadow" onclick="mostrarApp()" style="display:none;">ACESSAR PAINEL</button>
     </div>
-</div>
-
-<div id="loading-screen">
-    <div class="spinner mb-3"></div>
-    <h5 class="fw-800">Sincronizando Maracanaú...</h5>
 </div>
 
 <div id="app" style="display:none;">
     <aside id="sidebar">
-        <h5 class="fw-800 mb-5 text-center">PAINEL OFICIAL</h5>
+        <h5 class="fw-800 mb-4 text-center">MARACANAÚ DATA</h5>
+        
+        <div class="mb-4 position-relative">
+            <label class="small fw-bold opacity-50">BUSCAR ESCOLA</label>
+            <input type="text" id="schoolSearch" class="form-control bg-dark text-white border-0 mt-1" placeholder="Digite o nome..." oninput="filtrarEscolas()">
+            <div id="search-results" class="shadow"></div>
+        </div>
+
         <div class="mb-4">
             <label class="small fw-bold opacity-50">ETAPA</label>
-            <select id="selEtapa" class="form-select bg-dark text-white border-0 mt-1 mb-3 shadow-none" onchange="popularComponentes()"></select>
+            <select id="selEtapa" class="form-select bg-dark text-white border-0 mt-1 mb-3" onchange="popularComponentes()"></select>
             <label class="small fw-bold opacity-50">COMPONENTE</label>
-            <select id="selComp" class="form-select bg-dark text-white border-0 mt-1 mb-5 shadow-none" onchange="render()"></select>
+            <select id="selComp" class="form-select bg-dark text-white border-0 mt-1 mb-5" onchange="render()"></select>
         </div>
-        <button class="btn btn-info w-100 fw-bold text-white mb-3" onclick="abrirSumario()">SUMÁRIO EXECUTIVO</button>
-        <button class="btn btn-outline-danger w-100 fw-bold" onclick="location.reload()">SAIR</button>
+
+        <button class="btn btn-info w-100 fw-bold text-white mb-3 shadow-sm" onclick="abrirSumario()"><i class="fas fa-file-pdf me-2"></i>GERAR SUMÁRIO</button>
+        <button class="btn btn-outline-light w-100 btn-sm opacity-50" onclick="location.reload()">RECARREGAR SISTEMA</button>
     </aside>
     
     <button class="btn btn-toggle shadow-sm" onclick="toggleMenu()"><i class="fas fa-bars"></i></button>
 
     <main id="content">
-        <header class="mb-4 pt-2">
-            <h2 id="hEscola" class="fw-800 text-primary mb-0">---</h2>
-            <p id="hInep" class="text-muted fw-bold">---</p>
+        <header class="mb-4">
+            <h2 id="hEscola" class="fw-800 text-primary mb-0">Selecione uma Escola</h2>
+            <p id="hInep" class="text-muted fw-bold small">---</p>
         </header>
 
         <ul class="nav nav-pills mb-4 gap-2">
@@ -119,26 +120,24 @@
         </div>
 
         <footer class="footer-app">
-            <b>© 2026 Secretaria Municipal de Educação de Maracanaú</b><br>
-            Plataforma de Gestão de Resultados SPAECE
+            <b>Secretaria Municipal de Educação de Maracanaú</b><br>
+            Monitoramento de Aprendizagem © 2026
         </footer>
     </main>
 </div>
 
 <div class="modal fade" id="modalSumario" tabindex="-1">
     <div class="modal-dialog modal-xl">
-        <div class="modal-content border-0 shadow-lg">
-            <div class="modal-header bg-primary text-white p-4">
-                <h5 class="modal-title fw-800"><i class="fas fa-file-invoice me-2"></i>RELATÓRIO DE DESEMPENHO ESTRUTURADO</h5>
+        <div class="modal-content border-0">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title fw-800">RELATÓRIO ESTRUTURADO</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body bg-light" id="sumario-area">
-                <div class="sumario-container mx-auto shadow-sm" id="sumario-content">
-                    </div>
+                <div class="sumario-container mx-auto" id="sumario-content"></div>
             </div>
-            <div class="modal-footer p-3 bg-white">
-                <button class="btn btn-secondary px-4 fw-bold" data-bs-dismiss="modal">FECHAR</button>
-                <button class="btn btn-success px-4 fw-bold" onclick="gerarPDF()"><i class="fas fa-download me-2"></i>SALVAR EM PDF</button>
+            <div class="modal-footer">
+                <button class="btn btn-success px-5 fw-bold" onclick="gerarPDF()">SALVAR EM PDF</button>
             </div>
         </div>
     </div>
@@ -147,33 +146,47 @@
 <script>
 const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxj9fSRN5Vsxmf7er8u4dwv3VG1L3Iba2qg24stpzU5gA-pfttuzXgsyK03-hO9PoL_/exec";
 let database = [], chartP = null, chartI = null;
-Chart.register(ChartDataLabels);
+let escolaSelecionada = null;
 
 async function load() {
     try {
         const r = await fetch(WEB_APP_URL);
         database = await r.json();
-        const status = document.getElementById('db-status');
-        status.innerHTML = "✓ Base de Dados Pronta";
-        status.className = "alert alert-success py-2 small";
-        document.getElementById('btnEntrar').disabled = false;
-    } catch(e) { document.getElementById('db-status').innerText = "Erro ao conectar."; }
+        document.getElementById('loader-area').style.display = 'none';
+        document.getElementById('btnAcessar').style.display = 'block';
+    } catch(e) { 
+        alert("Erro ao carregar dados. Verifique sua conexão."); 
+    }
 }
 
-function entrar() {
-    const inep = document.getElementById('inepInput').value;
-    const filter = database.filter(d => String(d.INEP_ESC || d.INEP) === inep);
-    if(filter.length > 0) {
-        document.getElementById('login-overlay').style.display = 'none';
-        document.getElementById('loading-screen').style.display = 'flex';
-        setTimeout(() => {
-            document.getElementById('loading-screen').style.display = 'none';
-            document.getElementById('app').style.display = 'block';
-            const etapas = [...new Set(filter.map(d => d.ETAPA))].sort();
-            document.getElementById('selEtapa').innerHTML = etapas.map(e => `<option>${e}</option>`).join('');
-            popularComponentes();
-        }, 1200);
-    } else { alert("INEP não encontrado!"); }
+function mostrarApp() {
+    document.getElementById('splash-screen').style.fadeOut = "slow";
+    setTimeout(() => {
+        document.getElementById('splash-screen').style.display = 'none';
+        document.getElementById('app').style.display = 'block';
+    }, 500);
+}
+
+function filtrarEscolas() {
+    const termo = document.getElementById('schoolSearch').value.toUpperCase();
+    const lista = document.getElementById('search-results');
+    if (termo.length < 3) { lista.style.display = 'none'; return; }
+
+    const escolas = [...new Set(database.filter(d => (d.ESCOLA || d.NO_MUNICIPIO).includes(termo)).map(d => d.ESCOLA || d.NO_MUNICIPIO))].slice(0, 10);
+    
+    lista.innerHTML = escolas.map(e => `<div class="search-item" onclick="selecionarEscola('${e}')">${e}</div>`).join('');
+    lista.style.display = 'block';
+}
+
+function selecionarEscola(nome) {
+    escolaSelecionada = nome;
+    document.getElementById('schoolSearch').value = nome;
+    document.getElementById('search-results').style.display = 'none';
+    
+    const filter = database.filter(d => (d.ESCOLA || d.NO_MUNICIPIO) === nome);
+    const etapas = [...new Set(filter.map(d => d.ETAPA))].sort();
+    document.getElementById('selEtapa').innerHTML = etapas.map(e => `<option>${e}</option>`).join('');
+    popularComponentes();
 }
 
 function toggleMenu() {
@@ -184,22 +197,20 @@ function toggleMenu() {
 function parse(v) { if(!v) return 0; return parseFloat(String(v).replace('%','').replace(',','.')) || 0; }
 
 function popularComponentes() {
-    const inep = document.getElementById('inepInput').value;
     const etapa = document.getElementById('selEtapa').value;
-    const filter = database.filter(d => String(d.INEP_ESC || d.INEP) === inep && d.ETAPA === etapa);
+    const filter = database.filter(d => (d.ESCOLA || d.NO_MUNICIPIO) === escolaSelecionada && d.ETAPA === etapa);
     const comps = [...new Set(filter.map(d => d.COMPONENTE_CURRICULAR || d.DISCIPLINA))].sort();
     document.getElementById('selComp').innerHTML = comps.map(c => `<option>${c}</option>`).join('');
     render();
 }
 
 function render() {
-    const inep = document.getElementById('inepInput').value;
     const etapa = document.getElementById('selEtapa').value;
     const comp = document.getElementById('selComp').value;
-    const rows = database.filter(d => String(d.INEP_ESC || d.INEP) === inep && d.ETAPA === etapa && (d.COMPONENTE_CURRICULAR === comp || d.DISCIPLINA === comp)).sort((a,b) => a.EDICAO - b.EDICAO);
+    const rows = database.filter(d => (d.ESCOLA || d.NO_MUNICIPIO) === escolaSelecionada && d.ETAPA === etapa && (d.COMPONENTE_CURRICULAR === comp || d.DISCIPLINA === comp)).sort((a,b) => a.EDICAO - b.EDICAO);
 
     document.getElementById('hEscola').innerText = rows[0].ESCOLA || rows[0].NO_MUNICIPIO;
-    document.getElementById('hInep').innerText = `INEP: ${inep} | ${etapa} | ${comp}`;
+    document.getElementById('hInep').innerText = `INEP: ${rows[0].INEP_ESC || rows[0].INEP} | ${etapa} | ${comp}`;
 
     renderProf(rows);
     renderIde(rows);
@@ -211,8 +222,8 @@ function renderProf(rows) {
     if(chartP) chartP.destroy();
     chartP = new Chart(document.getElementById('chartProf'), {
         type: 'bar',
-        data: { labels: rows.map(r => r.EDICAO), datasets: [{ data: rows.map(r => parse(r.PROFICIENCIA_MEDIA).toFixed(1)), backgroundColor: '#4f46e5', borderRadius: 8 }] },
-        options: { maintainAspectRatio: false, plugins: { datalabels: { anchor:'end', align:'top', font:{weight:'bold'} } } }
+        data: { labels: rows.map(r => r.EDICAO), datasets: [{ label: 'Proficiência', data: rows.map(r => parse(r.PROFICIENCIA_MEDIA).toFixed(1)), backgroundColor: '#4f46e5' }] },
+        options: { maintainAspectRatio: false, plugins: { datalabels: { anchor:'end', align:'top' } } }
     });
 }
 
@@ -220,32 +231,26 @@ function renderIde(rows) {
     if(chartI) chartI.destroy();
     chartI = new Chart(document.getElementById('chartIde'), {
         type: 'line',
-        data: { labels: rows.map(r => r.EDICAO), datasets: [{ label:'IDE', data: rows.map(r => (parse(r.IDE_Alfa) || parse(r.IDE)).toFixed(2)), borderColor: '#10b981', tension: 0.3, pointRadius: 6, fill: true, backgroundColor: 'rgba(16,185,129,0.1)' }] },
-        options: { maintainAspectRatio: false, plugins: { datalabels: { align:'top', font: {weight:'bold'} } } }
+        data: { labels: rows.map(r => r.EDICAO), datasets: [{ label:'IDE', data: rows.map(r => (parse(r.IDE_Alfa) || parse(r.IDE)).toFixed(2)), borderColor: '#006400', tension: 0.3, fill: true, backgroundColor: 'rgba(0,100,0,0.1)' }] },
+        options: { maintainAspectRatio: false, plugins: { datalabels: { align:'top' } } }
     });
 }
 
 function renderRede(rowsEscola, etapa, comp) {
     const cont = document.getElementById('gridComparativo');
-    cont.innerHTML = '<h5 class="fw-bold mb-4">Diferencial vs Média Maracanaú</h5>';
+    cont.innerHTML = '<h5 class="fw-bold mb-4">Comparativo com a Rede</h5>';
     const redeGeral = database.filter(d => d.ETAPA === etapa && (d.COMPONENTE_CURRICULAR === comp || d.DISCIPLINA === comp));
     
     rowsEscola.slice().reverse().forEach(esc => {
         const redeAno = redeGeral.filter(r => r.EDICAO === esc.EDICAO);
         const maracanau = parse(redeAno.find(r => (r.NO_MUNICIPIO || "").includes("MARACANAU"))?.PROFICIENCIA_MEDIA);
         const diff = parse(esc.PROFICIENCIA_MEDIA) - maracanau;
-
-        cont.innerHTML += `
-            <div class="glass-card">
-                <div class="row align-items-center">
-                    <div class="col-md-3"><strong>Edição ${esc.EDICAO}</strong></div>
-                    <div class="col-md-3 text-center border-end">Sua Escola: <b class="text-primary">${parse(esc.PROFICIENCIA_MEDIA).toFixed(1)}</b></div>
-                    <div class="col-md-3 text-center border-end">Rede: <b>${maracanau.toFixed(1)}</b></div>
-                    <div class="col-md-3 text-center">
-                        Diferença: <b class="${diff >= 0 ? 'text-success' : 'text-danger'}">${diff > 0 ? '+' : ''}${diff.toFixed(1)} pts</b>
-                    </div>
-                </div>
-            </div>`;
+        cont.innerHTML += `<div class="glass-card"><div class="row">
+            <div class="col-3"><b>${esc.EDICAO}</b></div>
+            <div class="col-3 text-center">Escola: ${parse(esc.PROFICIENCIA_MEDIA).toFixed(1)}</div>
+            <div class="col-3 text-center">Rede: ${maracanau.toFixed(1)}</div>
+            <div class="col-3 text-center fw-bold ${diff >= 0 ? 'text-success' : 'text-danger'}">${diff > 0 ? '+' : ''}${diff.toFixed(1)}</div>
+        </div></div>`;
     });
 }
 
@@ -256,35 +261,19 @@ function renderNiveis(rows, etapa) {
         const id = `chartNiv-${i}`;
         let l = isA ? ['Não Alfab.', 'Incompleta', 'Interm.', 'Sufic.', 'Desej.'] : ['M. Crítico', 'Crítico', 'Interm.', 'Adequado'];
         let v = isA ? [parse(row.NAO_ALFABETIZADOS), parse(row.ALFABETIZACAO_INCOMPLETA), parse(row.INTERMEDIARIO), parse(row.SUFICIENTE), parse(row.DESEJAVEL)] : [parse(row.MUITO_CRITICO), parse(row.CRITICO), parse(row.INTERMEDIARIO), parse(row.ADEQUADO)];
-        let c = isA ? ['#dc2626', '#FFFFED', '#facc15', '#22c55e', '#006400'] : ['#dc2626', '#FFFFED', '#22c55e', '#006400'];
+        let c = isA ? ['#dc2626', '#ff4500', '#ffff00', '#22c55e', '#006400'] : ['#dc2626', '#ff4500', '#ffff00', '#006400'];
         
-        const soma = isA ? (v[3] + v[4]) : (v[2] + v[3]);
-        const sClass = soma > 75 ? 'bg-excelente' : (soma > 50 ? 'bg-bom' : (soma > 25 ? 'bg-alerta' : 'bg-critico'));
-        const sLabel = soma > 75 ? 'ADEQUADO' : (soma > 50 ? 'INTERMEDIARIO' : (soma > 25 ? 'CRÍTICO' : 'MUITO CRÍTICO'));
-
-        cont.innerHTML += `
-            <div class="glass-card">
-                <div class="row align-items-center">
-                    <div class="col-md-9 border-end">
-                        <h6 class="fw-bold mb-3">Níveis de Aprendizagem - Edição ${row.EDICAO}</h6>
-                        <div style="height:90px"><canvas id="${id}"></canvas></div>
-                    </div>
-                    <div class="col-md-3 text-center px-4">
-                        <div class="status-badge ${sClass} shadow-sm">
-                            <small class="d-block opacity-75">APRENDIZAGEM</small>
-                            <h3 class="mb-0 fw-800">${soma.toFixed(1)}%</h3>
-                            <small>${sLabel}</small>
-                        </div>
-                    </div>
-                </div>
-            </div>`;
+        cont.innerHTML += `<div class="glass-card">
+            <h6>Edição ${row.EDICAO}</h6>
+            <div style="height:100px"><canvas id="${id}"></canvas></div>
+        </div>`;
         
         setTimeout(() => {
             new Chart(document.getElementById(id), {
                 type: 'bar', data: { labels: [''], datasets: l.map((lab, idx) => ({ label: lab, data: [v[idx].toFixed(1)], backgroundColor: c[idx] })) },
                 options: { indexAxis: 'y', maintainAspectRatio: false, plugins: { 
-                    legend: { position: 'bottom', labels: { boxWidth: 10, font: {size: 10} } },
-                    datalabels: { color: (ctx) => [0, 3, 4].includes(ctx.datasetIndex) && !isA ? '#fff' : (isA && [0, 3, 4].includes(ctx.datasetIndex) ? '#fff' : '#000'), font: {weight: 'bold'}, formatter: v => v > 4 ? v + '%' : '' } 
+                    legend: { position: 'bottom' },
+                    datalabels: { color: (ctx) => ctx.dataset.backgroundColor === '#ffff00' ? '#000' : '#fff' }
                 }, scales: { x: { stacked: true, display: false }, y: { stacked: true, display: false } } }
             });
         }, 300);
@@ -293,51 +282,41 @@ function renderNiveis(rows, etapa) {
 
 async function abrirSumario() {
     const area = document.getElementById('sumario-content');
+    // Forçar delay para garantir que os canvas do IDE e Proficiência estejam prontos
+    const imgProf = document.getElementById('chartProf').toDataURL("image/png");
+    const imgIde = document.getElementById('chartIde').toDataURL("image/png");
+
     area.innerHTML = `
-        <div class="sumario-header text-center">
-            <h1 class="fw-800 mb-1 text-primary">${document.getElementById('hEscola').innerText}</h1>
-            <h5 class="text-muted fw-bold">${document.getElementById('hInep').innerText}</h5>
-            <p class="mb-0 mt-3 small text-uppercase fw-bold text-secondary border-top pt-2">Relatório Executivo SPAECE - Sistema Analytics Maracanaú</p>
+        <div class="text-center mb-5 border-bottom pb-3">
+            <h2 class="fw-800 text-primary">${escolaSelecionada}</h2>
+            <p class="text-muted small">Relatório Consolidado SPAECE Analytics</p>
         </div>
-        
-        <div class="row mb-5">
-            <div class="col-6"><p class="small fw-bold border-bottom pb-1">Evolução de Proficiência</p><img src="${document.getElementById('chartProf').toDataURL()}" class="img-fluid border p-2 rounded bg-white"></div>
-            <div class="col-6"><p class="small fw-bold border-bottom pb-1">Evolução de IDE</p><img src="${document.getElementById('chartIde').toDataURL()}" class="img-fluid border p-2 rounded bg-white"></div>
+        <div class="row mb-4">
+            <div class="col-6 text-center"><p class="fw-bold small">Evolução Proficiência</p><img src="${imgProf}" class="img-fluid border rounded shadow-sm"></div>
+            <div class="col-6 text-center"><p class="fw-bold small">Evolução IDE</p><img src="${imgIde}" class="img-fluid border rounded shadow-sm"></div>
         </div>
-
-        <div class="mt-4">
-            <h5 class="fw-800 text-dark border-bottom pb-2 mb-4">Análise de Níveis por Edição</h5>
-            <div id="clone-niveis"></div>
-        </div>
-
-        <div class="mt-5 pt-5 text-center text-muted border-top" style="font-size: 10px;">
-            Documento gerado em ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR')}.<br>
-            A fidedignidade destes dados está vinculada à base oficial do SPAECE/Maracanaú.
-        </div>
+        <div id="sum-niveis"></div>
     `;
 
     document.querySelectorAll('#gridNiveis .glass-card').forEach(card => {
         const clone = card.cloneNode(true);
-        const canvas = card.querySelector('canvas');
+        const canv = card.querySelector('canvas');
         const img = document.createElement('img');
-        img.src = canvas.toDataURL();
+        img.src = canv.toDataURL("image/png");
         img.className = "img-fluid w-100 mt-2";
         clone.querySelector('canvas').replaceWith(img);
-        clone.className = "mb-4 border p-4 rounded";
-        area.querySelector('#clone-niveis').appendChild(clone);
+        area.querySelector('#sum-niveis').appendChild(clone);
     });
 
     new bootstrap.Modal(document.getElementById('modalSumario')).show();
 }
 
 async function gerarPDF() {
-    const element = document.getElementById('sumario-content');
-    const canvas = await html2canvas(element, { scale: 2 });
+    const el = document.getElementById('sumario-content');
+    const canvas = await html2canvas(el, { scale: 2 });
     const pdf = new jspdf.jsPDF('p', 'mm', 'a4');
-    const imgWidth = 210;
-    const imgHeight = (canvas.height * imgWidth) / canvas.width;
-    pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, imgWidth, imgHeight);
-    pdf.save(`Relatorio_Executivo_${document.getElementById('inepInput').value}.pdf`);
+    pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, 210, (canvas.height * 210) / canvas.width);
+    pdf.save(`Relatorio_${escolaSelecionada}.pdf`);
 }
 
 window.onload = load;
