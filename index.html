@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SPAECE Analytics Pro - Maracanaú</title>
+    <title>SPAECE Analytics - Maracanaú</title>
     
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -17,118 +17,80 @@
     <style>
         :root { 
             --primary: #0f172a; --accent: #4f46e5; --bg-app: #f1f5f9; --sidebar-w: 300px;
-            --cor-critico: #dc2626; --cor-alerta: #f97316; --cor-interm: #ffff00; --cor-adequado: #166534; --cor-desejavel: #166534;
+            /* Cores Oficiais SPAECE */
+            --vermelho: #dc2626; --laranja: #f97316; --amarelo: #ffff00; --verde-claro: #86efac; --verde-escuro: #166534;
         }
-        body { background-color: var(--bg-app); font-family: 'Inter', sans-serif; overflow-x: hidden; }
-
-        /* TELA DE ABERTURA (SPLASH) */
-        #splash-screen {
-            position: fixed; inset: 0; z-index: 10000;
-            background: radial-gradient(circle at top right, #4f46e5, #0f172a);
-            display: flex; align-items: center; justify-content: center; color: white; text-align: center;
-        }
-
-        /* SIDEBAR */
-        #sidebar { 
-            width: var(--sidebar-w); height: 100vh; position: fixed; left: 0; top: 0;
-            background: var(--primary); color: white; transition: 0.3s; z-index: 1050; padding: 25px;
-        }
+        body { background-color: var(--bg-app); font-family: 'Inter', sans-serif; }
+        #splash-screen { position: fixed; inset: 0; z-index: 10000; background: #0f172a; display: flex; align-items: center; justify-content: center; color: white; text-align: center; }
+        #sidebar { width: var(--sidebar-w); height: 100vh; position: fixed; left: 0; top: 0; background: var(--primary); color: white; transition: 0.3s; z-index: 1050; padding: 25px; }
         #sidebar.collapsed { left: calc(var(--sidebar-w) * -1); }
         #content { margin-left: var(--sidebar-w); transition: 0.3s ease; padding: 30px; min-height: 100vh; }
         #content.expanded { margin-left: 0; }
-        .btn-toggle { position: fixed; left: 270px; top: 20px; z-index: 1100; background: white; border: 1px solid #ddd; border-radius: 8px; padding: 5px 10px; }
+        .btn-toggle { position: fixed; left: 270px; top: 20px; z-index: 1100; background: white; border: 1px solid #ddd; border-radius: 8px; }
         #sidebar.collapsed + .btn-toggle { left: 20px; }
-
-        /* CARDS E STATUS */
-        .glass-card { background: white; border-radius: 20px; padding: 25px; border: 1px solid #e2e8f0; margin-bottom: 25px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
-        .status-badge { padding: 12px; border-radius: 12px; text-align: center; font-weight: 800; border: 1px solid rgba(0,0,0,0.1); }
+        .glass-card { background: white; border-radius: 20px; padding: 20px; border: 1px solid #e2e8f0; margin-bottom: 25px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        .status-badge { padding: 15px; border-radius: 12px; text-align: center; font-weight: 800; border: 1px solid rgba(0,0,0,0.1); width: 100%; }
         
-        /* CORES MARACANAÚ */
-        .bg-critico { background: #dc2626 !important; color: white !important; }
-        .bg-interm { background: #ffff00 !important; color: #000 !important; }
-        .bg-adequado-desejavel { background: #166534 !important; color: white !important; }
-
-        .footer-app { padding: 20px; text-align: center; color: #64748b; font-size: 12px; border-top: 1px solid #e2e8f0; margin-top: 40px; }
+        /* Helpers de Cores */
+        .c-vml { background: var(--vermelho) !important; color: white !important; }
+        .c-lar { background: var(--laranja) !important; color: white !important; }
+        .c-ama { background: var(--amarelo) !important; color: black !important; }
+        .c-vcl { background: var(--verde-claro) !important; color: black !important; }
+        .c-ves { background: var(--verde-escuro) !important; color: white !important; }
     </style>
 </head>
 <body>
 
 <div id="splash-screen">
-    <div class="p-4">
-        <i class="fas fa-chart-pie fa-4x mb-4"></i>
+    <div>
         <h1 class="fw-800">SPAECE ANALYTICS</h1>
-        <p class="opacity-75 mb-4">Maracanaú - Conectando Dados Educacionais</p>
-        <div id="loader-msg">
-            <div class="spinner-border text-light mb-3"></div>
-            <p class="small">Sincronizando base de dados...</p>
-        </div>
-        <button id="btnEntrar" class="btn btn-light btn-lg fw-bold px-5 shadow" onclick="iniciarApp()" style="display:none;">ACESSAR DASHBOARD</button>
+        <p class="opacity-75 mb-4">SME Maracanaú</p>
+        <div id="loader"><div class="spinner-border text-light"></div></div>
+        <button id="btnEntrar" class="btn btn-primary px-5 fw-bold" onclick="entrar()" style="display:none;">VER RESULTADOS DA REDE</button>
     </div>
 </div>
 
 <div id="app" style="display:none;">
     <aside id="sidebar">
-        <h5 class="fw-800 mb-5 text-center">PAINEL OFICIAL</h5>
+        <h5 class="fw-800 mb-4 text-center">FILTROS</h5>
         <div class="mb-4">
-            <label class="small fw-bold opacity-50">ESCOLA</label>
-            <select id="selEscola" class="form-select bg-dark text-white border-0 mt-1 mb-3 shadow-none" onchange="selecionarEscola()"></select>
-            
+            <label class="small fw-bold opacity-50">ESCOLA / REDE</label>
+            <select id="selEscola" class="form-select bg-dark text-white border-0 mb-3" onchange="selecionarEscola()"></select>
             <label class="small fw-bold opacity-50">ETAPA</label>
-            <select id="selEtapa" class="form-select bg-dark text-white border-0 mt-1 mb-3" onchange="popularComponentes()"></select>
-            
+            <select id="selEtapa" class="form-select bg-dark text-white border-0 mb-3" onchange="popularComponentes()"></select>
             <label class="small fw-bold opacity-50">COMPONENTE</label>
-            <select id="selComp" class="form-select bg-dark text-white border-0 mt-1 mb-5" onchange="render()"></select>
+            <select id="selComp" class="form-select bg-dark text-white border-0 mb-5" onchange="render()"></select>
         </div>
-        <button class="btn btn-info w-100 fw-bold text-white mb-3 shadow" onclick="abrirSumario()">SUMÁRIO EXECUTIVO</button>
+        <button class="btn btn-info w-100 fw-bold text-white mb-3" onclick="abrirSumario()">SUMÁRIO EXECUTIVO</button>
         <button class="btn btn-outline-danger w-100 fw-bold" onclick="location.reload()">SAIR</button>
     </aside>
-    
+
     <button class="btn btn-toggle shadow-sm" onclick="toggleMenu()"><i class="fas fa-bars"></i></button>
 
     <main id="content">
-        <header class="mb-4 pt-2">
+        <header class="mb-4">
             <h2 id="hEscola" class="fw-800 text-primary mb-0">---</h2>
             <p id="hInep" class="text-muted fw-bold">---</p>
         </header>
 
         <ul class="nav nav-pills mb-4 gap-2">
-            <li class="nav-item"><button class="nav-link active rounded-pill px-4 fw-bold" data-bs-toggle="pill" data-bs-target="#p-prof">PROFICIÊNCIA</button></li>
-            <li class="nav-item"><button class="nav-link rounded-pill px-4 fw-bold" data-bs-toggle="pill" data-bs-target="#p-ide">IDE</button></li>
-            <li class="nav-item"><button class="nav-link rounded-pill px-4 fw-bold" data-bs-toggle="pill" data-bs-target="#p-comp">REDE</button></li>
-            <li class="nav-item"><button class="nav-link rounded-pill px-4 fw-bold" data-bs-toggle="pill" data-bs-target="#p-niveis">NÍVEIS</button></li>
-            <li class="nav-item"><button class="nav-link rounded-pill px-4 fw-bold" data-bs-toggle="pill" data-bs-target="#p-rel">RELATÓRIO</button></li>
+            <li class="nav-item"><button class="nav-link active rounded-pill fw-bold" data-bs-toggle="pill" data-bs-target="#p-prof">PROFICIÊNCIA</button></li>
+            <li class="nav-item"><button class="nav-link rounded-pill fw-bold" data-bs-toggle="pill" data-bs-target="#p-ide">IDE</button></li>
+            <li class="nav-item"><button class="nav-link rounded-pill fw-bold" data-bs-toggle="pill" data-bs-target="#p-rede">REDE</button></li>
+            <li class="nav-item"><button class="nav-link rounded-pill fw-bold" data-bs-toggle="pill" data-bs-target="#p-niveis">NÍVEIS</button></li>
         </ul>
 
         <div class="tab-content">
-            <div class="tab-pane fade show active" id="p-prof"><div class="glass-card"><canvas id="chartProf" height="380"></canvas></div></div>
-            <div class="tab-pane fade" id="p-ide"><div class="glass-card"><canvas id="chartIde" height="380"></canvas></div></div>
-            <div class="tab-pane fade" id="p-comp"><div id="gridComparativo"></div></div>
+            <div class="tab-pane fade show active" id="p-prof"><div class="glass-card"><canvas id="chartProf" height="350"></canvas></div></div>
+            <div class="tab-pane fade" id="p-ide"><div class="glass-card"><canvas id="chartIde" height="350"></canvas></div></div>
+            <div class="tab-pane fade" id="p-rede"><div id="gridRede"></div></div>
             <div class="tab-pane fade" id="p-niveis"><div id="gridNiveis"></div></div>
-            <div class="tab-pane fade" id="p-rel"><div id="tabRelatorio"></div></div>
         </div>
-
-        <footer class="footer-app">
-            <b>© 2026 Secretaria Municipal de Educação de Maracanaú</b><br>
-            Plataforma Analytics - Todos os dados são oficiais
-        </footer>
     </main>
 </div>
 
 <div class="modal fade" id="modalSumario" tabindex="-1">
-    <div class="modal-dialog modal-xl">
-        <div class="modal-content border-0">
-            <div class="modal-header bg-primary text-white p-4">
-                <h5 class="modal-title fw-800"><i class="fas fa-file-pdf me-2"></i>RELATÓRIO EXECUTIVO ESTRUTURADO</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body bg-light" id="sumario-area">
-                <div id="sumario-content" style="background: white; padding: 40px; border-radius: 10px;"></div>
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn-success px-5 fw-bold" onclick="gerarPDF()">BAIXAR PDF</button>
-            </div>
-        </div>
-    </div>
+    <div class="modal-dialog modal-xl"><div class="modal-content"><div class="modal-body" id="sumario-content"></div><div class="modal-footer"><button class="btn btn-success" onclick="gerarPDF()">PDF</button></div></div></div>
 </div>
 
 <script>
@@ -141,16 +103,17 @@ async function load() {
         const r = await fetch(WEB_APP_URL);
         database = await r.json();
         const escolas = [...new Set(database.map(d => d.ESCOLA || d.NO_MUNICIPIO))].sort();
-        document.getElementById('selEscola').innerHTML = `<option value="" disabled selected>Escolha a Escola...</option>` + 
-                                                        escolas.map(e => `<option value="${e}">${e}</option>`).join('');
-        document.getElementById('loader-msg').style.display = 'none';
+        const sel = document.getElementById('selEscola');
+        sel.innerHTML = escolas.map(e => `<option value="${e}" ${e.includes('MARACANAU') ? 'selected' : ''}>${e}</option>`).join('');
+        document.getElementById('loader').style.display = 'none';
         document.getElementById('btnEntrar').style.display = 'inline-block';
-    } catch(e) { alert("Erro ao carregar dados."); }
+    } catch(e) { console.error(e); }
 }
 
-function iniciarApp() {
+function entrar() {
     document.getElementById('splash-screen').style.display = 'none';
     document.getElementById('app').style.display = 'block';
+    selecionarEscola();
 }
 
 function selecionarEscola() {
@@ -179,20 +142,19 @@ function render() {
     const rows = database.filter(d => (d.ESCOLA || d.NO_MUNICIPIO) === nome && d.ETAPA === etapa && (d.COMPONENTE_CURRICULAR === comp || d.DISCIPLINA === comp)).sort((a,b) => a.EDICAO - b.EDICAO);
 
     document.getElementById('hEscola').innerText = nome;
-    document.getElementById('hInep').innerText = `INEP: ${rows[0].INEP_ESC || rows[0].INEP} | ${etapa} | ${comp}`;
+    document.getElementById('hInep').innerText = `INEP: ${rows[0]?.INEP_ESC || rows[0]?.INEP || 'REDE'} | ${etapa} | ${comp}`;
 
     renderProf(rows);
     renderIde(rows);
     renderRede(rows, etapa, comp);
     renderNiveis([...rows].reverse(), etapa);
-    renderRelatorio(rows);
 }
 
 function renderProf(rows) {
     if(chartP) chartP.destroy();
     chartP = new Chart(document.getElementById('chartProf'), {
         type: 'bar',
-        data: { labels: rows.map(r => r.EDICAO), datasets: [{ label: 'Proficiência', data: rows.map(r => parse(r.PROFICIENCIA_MEDIA).toFixed(1)), backgroundColor: '#4f46e5', borderRadius: 8 }] },
+        data: { labels: rows.map(r => r.EDICAO), datasets: [{ label: 'Proficiência', data: rows.map(r => parse(r.PROFICIENCIA_MEDIA).toFixed(1)), backgroundColor: '#4f46e5' }] },
         options: { maintainAspectRatio: false, plugins: { datalabels: { anchor:'end', align:'top', font:{weight:'bold'} } } }
     });
 }
@@ -201,108 +163,78 @@ function renderIde(rows) {
     if(chartI) chartI.destroy();
     chartI = new Chart(document.getElementById('chartIde'), {
         type: 'line',
-        data: { labels: rows.map(r => r.EDICAO), datasets: [{ label:'IDE', data: rows.map(r => (parse(r.IDE_Alfa) || parse(r.IDE)).toFixed(2)), borderColor: '#166534', tension: 0.3, pointRadius: 6, fill: true, backgroundColor: 'rgba(22,101,52,0.1)' }] },
-        options: { maintainAspectRatio: false, plugins: { datalabels: { align:'top', font: {weight:'bold'} } } }
+        data: { labels: rows.map(r => r.EDICAO), datasets: [{ label:'IDE', data: rows.map(r => (parse(r.IDE_Alfa) || parse(r.IDE)).toFixed(2)), borderColor: '#166534', backgroundColor: 'rgba(22,101,52,0.1)', fill: true }] },
+        options: { maintainAspectRatio: false, plugins: { datalabels: { align:'top', font:{weight:'bold'} } } }
     });
 }
 
-function renderRede(rowsEscola, etapa, comp) {
-    const cont = document.getElementById('gridComparativo');
-    cont.innerHTML = '<h5 class="fw-bold mb-4">Diferencial vs Rede Maracanaú</h5>';
-    const redeGeral = database.filter(d => d.ETAPA === etapa && (d.COMPONENTE_CURRICULAR === comp || d.DISCIPLINA === comp));
-    rowsEscola.slice().reverse().forEach(esc => {
-        const redeAno = redeGeral.filter(r => r.EDICAO === esc.EDICAO);
-        const maracanau = parse(redeAno.find(r => (r.NO_MUNICIPIO || "").includes("MARACANAU"))?.PROFICIENCIA_MEDIA);
-        const diff = parse(esc.PROFICIENCIA_MEDIA) - maracanau;
+function renderRede(rowsEsc, etapa, comp) {
+    const cont = document.getElementById('gridRede'); cont.innerHTML = '';
+    const redeCompleta = database.filter(d => d.ETAPA === etapa && (d.COMPONENTE_CURRICULAR === comp || d.DISCIPLINA === comp));
+
+    rowsEsc.slice().reverse().forEach(esc => {
+        const anoData = redeCompleta.filter(d => d.EDICAO === esc.EDICAO);
+        const redeMedia = parse(anoData.find(d => d.NO_MUNICIPIO?.includes('MARACANAU'))?.PROFICIENCIA_MEDIA);
+        const profs = anoData.map(d => parse(d.PROFICIENCIA_MEDIA)).filter(p => p > 0);
+        const max = Math.max(...profs); const min = Math.min(...profs);
+        const diff = parse(esc.PROFICIENCIA_MEDIA) - redeMedia;
+
         cont.innerHTML += `<div class="glass-card"><div class="row align-items-center">
-            <div class="col-md-3"><strong>Edição ${esc.EDICAO}</strong></div>
-            <div class="col-md-3 text-center border-end">Escola: <b class="text-primary">${parse(esc.PROFICIENCIA_MEDIA).toFixed(1)}</b></div>
-            <div class="col-md-3 text-center border-end">Rede: <b>${maracanau.toFixed(1)}</b></div>
-            <div class="col-md-3 text-center"><b class="${diff >= 0 ? 'text-success' : 'text-danger'}">${diff > 0 ? '+' : ''}${diff.toFixed(1)} pts</b></div>
+            <div class="col-md-2"><b>EDIÇÃO ${esc.EDICAO}</b></div>
+            <div class="col-md-3 text-center">Maracanaú: <b>${redeMedia.toFixed(1)}</b></div>
+            <div class="col-md-3 text-center border-start border-end">Diferença: <b class="${diff >=0 ? 'text-success':'text-danger'}">${diff > 0 ? '+':''}${diff.toFixed(1)}</b></div>
+            <div class="col-md-4 text-center small">Mín: ${min.toFixed(1)} | Máx: ${max.toFixed(1)}</div>
         </div></div>`;
     });
 }
 
 function renderNiveis(rows, etapa) {
     const cont = document.getElementById('gridNiveis'); cont.innerHTML = '';
-    const isA = etapa.includes('2º');
-    rows.forEach((row, i) => {
-        const id = `chartNiv-${i}`;
-        let l = isA ? ['Não Alfab.', 'Incompleta', 'Interm.', 'Sufic.', 'Desej.'] : ['M. Crítico', 'Crítico', 'Interm.', 'Adequado'];
-        let v = isA ? [parse(row.NAO_ALFABETIZADOS), parse(row.ALFABETIZACAO_INCOMPLETA), parse(row.INTERMEDIARIO), parse(row.SUFICIENTE), parse(row.DESEJAVEL)] : [parse(row.MUITO_CRITICO), parse(row.CRITICO), parse(row.INTERMEDIARIO), parse(row.ADEQUADO)];
-        let c = isA ? ['#dc2626', '#f97316', '#ffff00', '#166534', '#166534'] : ['#dc2626', '#f97316', '#ffff00', '#166534'];
-        
-        // Cards de Status
-        let cardHTML = `<div class="row g-1 mb-3">`;
-        l.forEach((term, idx) => {
-            let bg = term === 'Interm.' ? 'bg-interm' : (['Adequado', 'Sufic.', 'Desej.'].includes(term) ? 'bg-adequado-desejavel' : 'bg-critico');
-            cardHTML += `<div class="col"><div class="status-badge ${bg}" style="font-size:10px">${term}<br>${v[idx].toFixed(1)}%</div></div>`;
-        });
-        cardHTML += `</div>`;
+    const isAlfa = etapa.includes('2º');
 
-        cont.innerHTML += `<div class="glass-card">
-            <h6 class="fw-bold mb-3">Níveis de Aprendizagem - Edição ${row.EDICAO}</h6>
-            ${cardHTML}
-            <div style="height:80px"><canvas id="${id}"></canvas></div>
-        </div>`;
+    rows.forEach((row, i) => {
+        const id = `chNiv-${i}`;
+        let l, v, c, soma;
         
+        if(isAlfa) {
+            l = ['Não Alfab.', 'Incompleta', 'Intermed.', 'Suficiente', 'Desejável'];
+            v = [parse(row.NAO_ALFABETIZADOS), parse(row.ALFABETIZACAO_INCOMPLETA), parse(row.INTERMEDIARIO), parse(row.SUFICIENTE), parse(row.DESEJAVEL)];
+            c = [window.getComputedStyle(document.documentElement).getPropertyValue('--vermelho'), 
+                 window.getComputedStyle(document.documentElement).getPropertyValue('--laranja'),
+                 window.getComputedStyle(document.documentElement).getPropertyValue('--amarelo'),
+                 window.getComputedStyle(document.documentElement).getPropertyValue('--verde-claro'),
+                 window.getComputedStyle(document.documentElement).getPropertyValue('--verde-escuro')];
+            soma = v[3] + v[4];
+        } else {
+            l = ['Muito Crítico', 'Crítico', 'Intermediário', 'Adequado'];
+            v = [parse(row.MUITO_CRITICO), parse(row.CRITICO), parse(row.INTERMEDIARIO), parse(row.ADEQUADO)];
+            c = [window.getComputedStyle(document.documentElement).getPropertyValue('--vermelho'), 
+                 window.getComputedStyle(document.documentElement).getPropertyValue('--amarelo'),
+                 window.getComputedStyle(document.documentElement).getPropertyValue('--verde-claro'),
+                 window.getComputedStyle(document.documentElement).getPropertyValue('--verde-escuro')];
+            soma = v[2] + v[3];
+        }
+
+        cont.innerHTML += `<div class="glass-card"><div class="row align-items-center">
+            <div class="col-md-9"><h6 class="fw-bold">Edição ${row.EDICAO}</h6><div style="height:100px"><canvas id="${id}"></canvas></div></div>
+            <div class="col-md-3"><div class="status-badge ${soma > 70 ? 'c-ves' : (soma > 50 ? 'c-vcl' : 'c-lar')}">
+                <small>APRENDIZAGEM</small><h2 class="mb-0">${soma.toFixed(1)}%</h2>
+            </div></div>
+        </div></div>`;
+
         setTimeout(() => {
             new Chart(document.getElementById(id), {
                 type: 'bar', data: { labels: [''], datasets: l.map((lab, idx) => ({ label: lab, data: [v[idx].toFixed(1)], backgroundColor: c[idx] })) },
-                options: { indexAxis: 'y', maintainAspectRatio: false, plugins: { 
-                    legend: { display: false },
-                    datalabels: { color: (ctx) => ctx.dataset.backgroundColor === '#ffff00' ? '#000' : '#fff', font: {weight: 'bold'}, formatter: v => v > 5 ? v + '%' : '' } 
-                }, scales: { x: { stacked: true, display: false }, y: { stacked: true, display: false } } }
+                options: { indexAxis: 'y', maintainAspectRatio: false, plugins: { legend: { display: false }, datalabels: { formatter: val => val > 5 ? val + '%' : '', color: '#000', font: {weight: 'bold'} } }, scales: { x: { stacked: true, display: false }, y: { stacked: true, display: false } } }
             });
         }, 300);
     });
 }
 
-function renderRelatorio(rows) {
-    let html = `<div class="glass-card"><table class="table table-hover small"><thead><tr><th>Edição</th><th>Proficiência</th><th>IDE</th><th>Indicador</th></tr></thead><tbody>`;
-    rows.forEach(r => { html += `<tr><td>${r.EDICAO}</td><td>${parse(r.PROFICIENCIA_MEDIA).toFixed(1)}</td><td>${(parse(r.IDE_Alfa) || parse(r.IDE)).toFixed(2)}</td><td>${r.INDICADOR}</td></tr>`; });
-    html += `</tbody></table></div>`;
-    document.getElementById('tabRelatorio').innerHTML = html;
-}
-
 async function abrirSumario() {
     const area = document.getElementById('sumario-content');
-    const imgP = document.getElementById('chartProf').toDataURL();
-    const imgI = document.getElementById('chartIde').toDataURL();
-
-    area.innerHTML = `
-        <div class="text-center border-bottom pb-4 mb-4">
-            <h1 class="fw-800 text-primary">${document.getElementById('hEscola').innerText}</h1>
-            <p class="text-muted fw-bold">${document.getElementById('hInep').innerText}</p>
-        </div>
-        <div class="row mb-5">
-            <div class="col-6 text-center"><h6>Evolução de Proficiência</h6><img src="${imgP}" class="img-fluid border rounded p-2"></div>
-            <div class="col-6 text-center"><h6>Evolução de IDE</h6><img src="${imgI}" class="img-fluid border rounded p-2"></div>
-        </div>
-        <div id="pdf-niveis"><h5>Análise de Níveis por Ano</h5></div>
-    `;
-
-    document.querySelectorAll('#gridNiveis .glass-card').forEach(card => {
-        const clone = card.cloneNode(true);
-        const canv = card.querySelector('canvas');
-        if(canv) {
-            const img = document.createElement('img');
-            img.src = canv.toDataURL();
-            img.className = "img-fluid w-100 mt-2";
-            clone.querySelector('canvas').replaceWith(img);
-        }
-        area.querySelector('#pdf-niveis').appendChild(clone);
-    });
-
+    area.innerHTML = `<h3>Relatório ${document.getElementById('selEscola').value}</h3>`;
     new bootstrap.Modal(document.getElementById('modalSumario')).show();
-}
-
-async function gerarPDF() {
-    const el = document.getElementById('sumario-content');
-    const canvas = await html2canvas(el, { scale: 2 });
-    const pdf = new jspdf.jsPDF('p', 'mm', 'a4');
-    pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, 210, (canvas.height * 210) / canvas.width);
-    pdf.save(`Relatorio_${document.getElementById('selEscola').value}.pdf`);
 }
 
 window.onload = load;
