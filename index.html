@@ -15,71 +15,93 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
     <style>
-        :root { 
-            --primary: #0f172a; --accent: #4f46e5; --bg-app: #f1f5f9; --sidebar-w: 260px;
-            --cor-critico: #dc2626; --cor-alerta: #f97316; --cor-interm: #ffff00; --cor-adequado: #166534; --cor-desejavel: #166534;
-        }
+        :root { --primary: #0f172a; --accent: #4f46e5; --bg-app: #f1f5f9; --sidebar-w: 280px; }
         body { background-color: var(--bg-app); font-family: 'Inter', sans-serif; overflow-x: hidden; }
 
-        /* SIDEBAR E LAYOUT */
-        #sidebar { width: var(--sidebar-w); height: 100vh; position: fixed; left: 0; top: 0; background: var(--primary); color: white; transition: 0.3s ease; z-index: 1050; padding: 25px; }
+        /* LOGIN ROBUSTO */
+        #login-overlay { 
+            position: fixed; inset: 0; z-index: 10000; 
+            background: radial-gradient(circle at top right, #4f46e5, #0f172a);
+            display: flex; align-items: center; justify-content: center;
+        }
+        .login-card { 
+            background: white; padding: 40px; border-radius: 28px; width: 100%; max-width: 420px; 
+            box-shadow: 0 25px 50px rgba(0,0,0,0.4); text-align: center;
+        }
+
+        /* LOADING */
+        #loading-screen {
+            position: fixed; inset: 0; z-index: 9999; background: white;
+            display: none; flex-direction: column; align-items: center; justify-content: center;
+        }
+        .spinner { width: 50px; height: 50px; border: 5px solid #f3f3f3; border-top: 5px solid var(--accent); border-radius: 50%; animation: spin 1s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* SIDEBAR RETRÁTIL */
+        #sidebar { 
+            width: var(--sidebar-w); height: 100vh; position: fixed; left: 0; top: 0;
+            background: var(--primary); color: white; transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1); z-index: 1050; padding: 25px;
+        }
         #sidebar.collapsed { left: calc(var(--sidebar-w) * -1); }
         #content { margin-left: var(--sidebar-w); transition: 0.3s ease; padding: 30px; min-height: 100vh; }
         #content.expanded { margin-left: 0; }
-        .btn-toggle { position: fixed; left: 220px; top: 20px; z-index: 1100; transition: 0.3s; background: white; border: 1px solid #ddd; border-radius: 8px; padding: 5px 10px; }
+        .btn-toggle { position: fixed; left: 240px; top: 20px; z-index: 1100; transition: 0.3s; background: white; border: 1px solid #ddd; border-radius: 8px; }
         #sidebar.collapsed + .btn-toggle { left: 20px; }
 
-        /* CARDS */
-        .glass-card { background: white; border-radius: 16px; padding: 20px; border: 1px solid #e2e8f0; margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.03); }
+        /* CARDS E GRÁFICOS */
+        .glass-card { background: white; border-radius: 20px; padding: 25px; border: 1px solid #e2e8f0; margin-bottom: 25px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
         
-        /* LOGIN & LOADING */
-        #login-overlay { position: fixed; inset: 0; z-index: 10000; background: #0f172a; display: flex; align-items: center; justify-content: center; }
-        .login-card { background: white; padding: 40px; border-radius: 24px; width: 380px; text-align: center; }
-        #loading-screen { position: fixed; inset: 0; z-index: 9999; background: rgba(255,255,255,0.9); display: none; flex-direction: column; align-items: center; justify-content: center; }
-
-        /* CORES NIVEIS */
-        .bg-interm { background-color: var(--cor-interm) !important; color: #000 !important; }
-        .bg-adequado-desejavel { background-color: var(--cor-adequado) !important; color: #fff !important; }
-        .bg-critico { background-color: var(--cor-critico) !important; color: #fff !important; }
+        /* CORES DE STATUS (AUMENTO DE CONTRASTE) */
+        .status-badge { padding: 12px; border-radius: 12px; text-align: center; font-weight: 800; border: 1px solid rgba(0,0,0,0.1); }
+        .bg-critico { background: #dc2626 !important; color: white !important; }
+        .bg-alerta { background: #facc15 !important; color: #000 !important; }
+        .bg-bom { background: #22c55e !important; color: white !important; }
+        .bg-excelente { background: #1e3a8a !important; color: white !important; }
 
         .footer-app { padding: 20px; text-align: center; color: #64748b; font-size: 12px; border-top: 1px solid #e2e8f0; margin-top: 40px; }
+
+        /* ESTILO SUMÁRIO */
+        .sumario-container { background: white; padding: 40px; border-radius: 10px; }
+        .sumario-header { border-bottom: 3px solid var(--primary); padding-bottom: 20px; margin-bottom: 30px; }
     </style>
 </head>
 <body>
 
 <div id="login-overlay">
-    <div class="login-card shadow-lg">
-        <h4 class="fw-800 mb-4">SPAECE ANALYTICS</h4>
-        <div id="db-status" class="alert alert-info py-2 small">Conectando à base...</div>
-        <input type="text" id="inepInput" class="form-control mb-3 text-center" placeholder="INEP da Escola">
-        <button id="btnEntrar" class="btn btn-primary w-100 fw-bold" onclick="entrar()" disabled>ENTRAR</button>
+    <div class="login-card">
+        <div class="mb-4"><i class="fas fa-chart-pie fa-3x text-primary"></i></div>
+        <h3 class="fw-800 mb-1">SPAECE ANALYTICS</h3>
+        <p class="text-muted small mb-4">Maracanaú - Conectando Dados Educacionais</p>
+        <div id="db-status" class="alert alert-warning py-2 small"><i class="fas fa-sync fa-spin me-2"></i>Conectando à base...</div>
+        <input type="text" id="inepInput" class="form-control mb-3 text-center py-2" placeholder="Digite o INEP da Escola">
+        <button id="btnEntrar" class="btn btn-primary w-100 fw-bold py-2" onclick="entrar()" disabled>ACESSAR DASHBOARD</button>
     </div>
 </div>
 
 <div id="loading-screen">
-    <div class="spinner-border text-primary mb-3"></div>
-    <h6 class="fw-bold">Carregando Dados...</h6>
+    <div class="spinner mb-3"></div>
+    <h5 class="fw-800">Sincronizando Maracanaú...</h5>
 </div>
 
 <div id="app" style="display:none;">
     <aside id="sidebar">
-        <h5 class="fw-800 mb-5">Analytics</h5>
+        <h5 class="fw-800 mb-5 text-center">PAINEL OFICIAL</h5>
         <div class="mb-4">
             <label class="small fw-bold opacity-50">ETAPA</label>
-            <select id="selEtapa" class="form-select bg-dark text-white border-0 mb-3" onchange="popularComponentes()"></select>
+            <select id="selEtapa" class="form-select bg-dark text-white border-0 mt-1 mb-3 shadow-none" onchange="popularComponentes()"></select>
             <label class="small fw-bold opacity-50">COMPONENTE</label>
-            <select id="selComp" class="form-select bg-dark text-white border-0 mb-5" onchange="render()"></select>
+            <select id="selComp" class="form-select bg-dark text-white border-0 mt-1 mb-5 shadow-none" onchange="render()"></select>
         </div>
-        <button class="btn btn-info w-100 fw-bold text-white mb-3" onclick="abrirSumario()">GERAR SUMÁRIO</button>
-        <button class="btn btn-outline-danger w-100 fw-bold" onclick="logout()">SAIR</button>
+        <button class="btn btn-info w-100 fw-bold text-white mb-3" onclick="abrirSumario()">SUMÁRIO EXECUTIVO</button>
+        <button class="btn btn-outline-danger w-100 fw-bold" onclick="location.reload()">SAIR</button>
     </aside>
     
-    <button class="btn btn-toggle" onclick="toggleMenu()"><i class="fas fa-bars"></i></button>
+    <button class="btn btn-toggle shadow-sm" onclick="toggleMenu()"><i class="fas fa-bars"></i></button>
 
     <main id="content">
         <header class="mb-4 pt-2">
             <h2 id="hEscola" class="fw-800 text-primary mb-0">---</h2>
-            <p id="hInep" class="text-muted small fw-bold">---</p>
+            <p id="hInep" class="text-muted fw-bold">---</p>
         </header>
 
         <ul class="nav nav-pills mb-4 gap-2">
@@ -87,35 +109,36 @@
             <li class="nav-item"><button class="nav-link rounded-pill px-4 fw-bold" data-bs-toggle="pill" data-bs-target="#p-ide">IDE</button></li>
             <li class="nav-item"><button class="nav-link rounded-pill px-4 fw-bold" data-bs-toggle="pill" data-bs-target="#p-comp">REDE</button></li>
             <li class="nav-item"><button class="nav-link rounded-pill px-4 fw-bold" data-bs-toggle="pill" data-bs-target="#p-niveis">NÍVEIS</button></li>
-            <li class="nav-item"><button class="nav-link rounded-pill px-4 fw-bold" data-bs-toggle="pill" data-bs-target="#p-rel">RELATÓRIO</button></li>
         </ul>
 
         <div class="tab-content">
-            <div class="tab-pane fade show active" id="p-prof"><div class="glass-card"><canvas id="chartProf" height="350"></canvas></div></div>
-            <div class="tab-pane fade" id="p-ide"><div class="glass-card"><canvas id="chartIde" height="350"></canvas></div></div>
+            <div class="tab-pane fade show active" id="p-prof"><div class="glass-card"><canvas id="chartProf" height="380"></canvas></div></div>
+            <div class="tab-pane fade" id="p-ide"><div class="glass-card"><canvas id="chartIde" height="380"></canvas></div></div>
             <div class="tab-pane fade" id="p-comp"><div id="gridComparativo"></div></div>
             <div class="tab-pane fade" id="p-niveis"><div id="gridNiveis"></div></div>
-            <div class="tab-pane fade" id="p-rel"><div id="tabRelatorio"></div></div>
         </div>
 
         <footer class="footer-app">
-            <b>SPAECE Analytics Maracanaú</b> - Gestão de Dados Educacionais © 2026
+            <b>© 2026 Secretaria Municipal de Educação de Maracanaú</b><br>
+            Plataforma de Gestão de Resultados SPAECE
         </footer>
     </main>
 </div>
 
 <div class="modal fade" id="modalSumario" tabindex="-1">
     <div class="modal-dialog modal-xl">
-        <div class="modal-content">
-            <div class="modal-header bg-primary text-white">
-                <h5 class="modal-title fw-800">SUMÁRIO EXECUTIVO ESTRUTURADO</h5>
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header bg-primary text-white p-4">
+                <h5 class="modal-title fw-800"><i class="fas fa-file-invoice me-2"></i>RELATÓRIO DE DESEMPENHO ESTRUTURADO</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
-            <div class="modal-body bg-white" id="sumario-area">
-                </div>
-            <div class="modal-footer">
-                <button class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
-                <button class="btn btn-success fw-bold" onclick="gerarPDF()">BAIXAR PDF</button>
+            <div class="modal-body bg-light" id="sumario-area">
+                <div class="sumario-container mx-auto shadow-sm" id="sumario-content">
+                    </div>
+            </div>
+            <div class="modal-footer p-3 bg-white">
+                <button class="btn btn-secondary px-4 fw-bold" data-bs-dismiss="modal">FECHAR</button>
+                <button class="btn btn-success px-4 fw-bold" onclick="gerarPDF()"><i class="fas fa-download me-2"></i>SALVAR EM PDF</button>
             </div>
         </div>
     </div>
@@ -126,17 +149,15 @@ const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxj9fSRN5Vsxmf7er8u
 let database = [], chartP = null, chartI = null;
 Chart.register(ChartDataLabels);
 
-// CARREGAMENTO OTIMIZADO: Só carrega se o database estiver vazio
 async function load() {
-    if(database.length > 0) return; 
     try {
         const r = await fetch(WEB_APP_URL);
         database = await r.json();
         const status = document.getElementById('db-status');
-        status.innerText = "✓ Base Conectada";
+        status.innerHTML = "✓ Base de Dados Pronta";
         status.className = "alert alert-success py-2 small";
         document.getElementById('btnEntrar').disabled = false;
-    } catch(e) { document.getElementById('db-status').innerText = "Erro na conexão."; }
+    } catch(e) { document.getElementById('db-status').innerText = "Erro ao conectar."; }
 }
 
 function entrar() {
@@ -151,14 +172,8 @@ function entrar() {
             const etapas = [...new Set(filter.map(d => d.ETAPA))].sort();
             document.getElementById('selEtapa').innerHTML = etapas.map(e => `<option>${e}</option>`).join('');
             popularComponentes();
-        }, 800);
-    } else { alert("INEP não encontrado."); }
-}
-
-function logout() {
-    document.getElementById('app').style.display = 'none';
-    document.getElementById('login-overlay').style.display = 'flex';
-    document.getElementById('inepInput').value = '';
+        }, 1200);
+    } else { alert("INEP não encontrado!"); }
 }
 
 function toggleMenu() {
@@ -171,7 +186,8 @@ function parse(v) { if(!v) return 0; return parseFloat(String(v).replace('%','')
 function popularComponentes() {
     const inep = document.getElementById('inepInput').value;
     const etapa = document.getElementById('selEtapa').value;
-    const comps = [...new Set(database.filter(d => String(d.INEP_ESC || d.INEP) === inep && d.ETAPA === etapa).map(d => d.COMPONENTE_CURRICULAR || d.DISCIPLINA))].sort();
+    const filter = database.filter(d => String(d.INEP_ESC || d.INEP) === inep && d.ETAPA === etapa);
+    const comps = [...new Set(filter.map(d => d.COMPONENTE_CURRICULAR || d.DISCIPLINA))].sort();
     document.getElementById('selComp').innerHTML = comps.map(c => `<option>${c}</option>`).join('');
     render();
 }
@@ -189,14 +205,13 @@ function render() {
     renderIde(rows);
     renderRede(rows, etapa, comp);
     renderNiveis([...rows].reverse(), etapa);
-    renderRelatorio(rows);
 }
 
 function renderProf(rows) {
     if(chartP) chartP.destroy();
     chartP = new Chart(document.getElementById('chartProf'), {
         type: 'bar',
-        data: { labels: rows.map(r => r.EDICAO), datasets: [{ data: rows.map(r => parse(r.PROFICIENCIA_MEDIA).toFixed(1)), backgroundColor: '#4f46e5', borderRadius: 6 }] },
+        data: { labels: rows.map(r => r.EDICAO), datasets: [{ data: rows.map(r => parse(r.PROFICIENCIA_MEDIA).toFixed(1)), backgroundColor: '#4f46e5', borderRadius: 8 }] },
         options: { maintainAspectRatio: false, plugins: { datalabels: { anchor:'end', align:'top', font:{weight:'bold'} } } }
     });
 }
@@ -205,14 +220,14 @@ function renderIde(rows) {
     if(chartI) chartI.destroy();
     chartI = new Chart(document.getElementById('chartIde'), {
         type: 'line',
-        data: { labels: rows.map(r => r.EDICAO), datasets: [{ label:'IDE', data: rows.map(r => (parse(r.IDE_Alfa) || parse(r.IDE)).toFixed(2)), borderColor: '#166534', tension: 0.3, pointRadius: 5, fill: true, backgroundColor: 'rgba(22,101,52,0.1)' }] },
-        options: { maintainAspectRatio: false, plugins: { datalabels: { align:'top', font:{weight:'bold'} } } }
+        data: { labels: rows.map(r => r.EDICAO), datasets: [{ label:'IDE', data: rows.map(r => (parse(r.IDE_Alfa) || parse(r.IDE)).toFixed(2)), borderColor: '#10b981', tension: 0.3, pointRadius: 6, fill: true, backgroundColor: 'rgba(16,185,129,0.1)' }] },
+        options: { maintainAspectRatio: false, plugins: { datalabels: { align:'top', font: {weight:'bold'} } } }
     });
 }
 
 function renderRede(rowsEscola, etapa, comp) {
     const cont = document.getElementById('gridComparativo');
-    cont.innerHTML = '<h5 class="fw-bold mb-4">Diferencial vs Rede Maracanaú</h5>';
+    cont.innerHTML = '<h5 class="fw-bold mb-4">Diferencial vs Média Maracanaú</h5>';
     const redeGeral = database.filter(d => d.ETAPA === etapa && (d.COMPONENTE_CURRICULAR === comp || d.DISCIPLINA === comp));
     
     rowsEscola.slice().reverse().forEach(esc => {
@@ -224,9 +239,11 @@ function renderRede(rowsEscola, etapa, comp) {
             <div class="glass-card">
                 <div class="row align-items-center">
                     <div class="col-md-3"><strong>Edição ${esc.EDICAO}</strong></div>
-                    <div class="col-md-3 text-center border-end">Sua Escola: <b>${parse(esc.PROFICIENCIA_MEDIA).toFixed(1)}</b></div>
+                    <div class="col-md-3 text-center border-end">Sua Escola: <b class="text-primary">${parse(esc.PROFICIENCIA_MEDIA).toFixed(1)}</b></div>
                     <div class="col-md-3 text-center border-end">Rede: <b>${maracanau.toFixed(1)}</b></div>
-                    <div class="col-md-3 text-center"><b class="${diff >= 0 ? 'text-success' : 'text-danger'}">${diff > 0 ? '+' : ''}${diff.toFixed(1)} pts</b></div>
+                    <div class="col-md-3 text-center">
+                        Diferença: <b class="${diff >= 0 ? 'text-success' : 'text-danger'}">${diff > 0 ? '+' : ''}${diff.toFixed(1)} pts</b>
+                    </div>
                 </div>
             </div>`;
     });
@@ -234,87 +251,92 @@ function renderRede(rowsEscola, etapa, comp) {
 
 function renderNiveis(rows, etapa) {
     const cont = document.getElementById('gridNiveis'); cont.innerHTML = '';
-    const isAlfa = etapa.includes('2º');
-    
+    const isA = etapa.includes('2º');
     rows.forEach((row, i) => {
         const id = `chartNiv-${i}`;
-        const labels = isAlfa ? ['Não Alfab.', 'Incompleta', 'Intermediário', 'Suficiente', 'Desejável'] : ['Muito Crítico', 'Crítico', 'Intermediário', 'Adequado'];
-        const valores = isAlfa ? [parse(row.NAO_ALFABETIZADOS), parse(row.ALFABETIZACAO_INCOMPLETA), parse(row.INTERMEDIARIO), parse(row.SUFICIENTE), parse(row.DESEJAVEL)] : [parse(row.MUITO_CRITICO), parse(row.CRITICO), parse(row.INTERMEDIARIO), parse(row.ADEQUADO)];
-        const cores = isAlfa ? ['#dc2626', '#f97316', '#ffff00', '#166534', '#166534'] : ['#dc2626', '#f97316', '#ffff00', '#166534'];
+        let l = isA ? ['Não Alfab.', 'Incompleta', 'Interm.', 'Sufic.', 'Desej.'] : ['M. Crítico', 'Crítico', 'Interm.', 'Adequado'];
+        let v = isA ? [parse(row.NAO_ALFABETIZADOS), parse(row.ALFABETIZACAO_INCOMPLETA), parse(row.INTERMEDIARIO), parse(row.SUFICIENTE), parse(row.DESEJAVEL)] : [parse(row.MUITO_CRITICO), parse(row.CRITICO), parse(row.INTERMEDIARIO), parse(row.ADEQUADO)];
+        let c = isA ? ['#dc2626', '#FFFFED', '#facc15', '#22c55e', '#006400'] : ['#dc2626', '#FFFFED', '#22c55e', '#006400'];
         
-        // Cards com Termos Corretos
-        let cardHTML = `<div class="row g-2 mb-3">`;
-        labels.forEach((l, idx) => {
-            let bg = (l === 'Adequado' || l === 'Desejável' || l === 'Suficiente') ? 'bg-adequado-desejavel' : (l === 'Intermediário' ? 'bg-interm' : 'bg-critico');
-            cardHTML += `<div class="col"><div class="p-2 border rounded text-center ${bg}" style="font-size:10px"><b>${l}</b><br>${valores[idx].toFixed(1)}%</div></div>`;
-        });
-        cardHTML += `</div>`;
+        const soma = isA ? (v[3] + v[4]) : (v[2] + v[3]);
+        const sClass = soma > 75 ? 'bg-excelente' : (soma > 50 ? 'bg-bom' : (soma > 25 ? 'bg-alerta' : 'bg-critico'));
+        const sLabel = soma > 75 ? 'ADEQUADO' : (soma > 50 ? 'INTERMEDIARIO' : (soma > 25 ? 'CRÍTICO' : 'MUITO CRÍTICO'));
 
         cont.innerHTML += `
             <div class="glass-card">
-                <h6 class="fw-bold">Edição ${row.EDICAO}</h6>
-                ${cardHTML}
-                <div style="height:60px"><canvas id="${id}"></canvas></div>
+                <div class="row align-items-center">
+                    <div class="col-md-9 border-end">
+                        <h6 class="fw-bold mb-3">Níveis de Aprendizagem - Edição ${row.EDICAO}</h6>
+                        <div style="height:90px"><canvas id="${id}"></canvas></div>
+                    </div>
+                    <div class="col-md-3 text-center px-4">
+                        <div class="status-badge ${sClass} shadow-sm">
+                            <small class="d-block opacity-75">APRENDIZAGEM</small>
+                            <h3 class="mb-0 fw-800">${soma.toFixed(1)}%</h3>
+                            <small>${sLabel}</small>
+                        </div>
+                    </div>
+                </div>
             </div>`;
         
         setTimeout(() => {
             new Chart(document.getElementById(id), {
-                type: 'bar', data: { labels: [''], datasets: labels.map((lab, idx) => ({ label: lab, data: [valores[idx].toFixed(1)], backgroundColor: cores[idx] })) },
+                type: 'bar', data: { labels: [''], datasets: l.map((lab, idx) => ({ label: lab, data: [v[idx].toFixed(1)], backgroundColor: c[idx] })) },
                 options: { indexAxis: 'y', maintainAspectRatio: false, plugins: { 
-                    legend: { display: false },
-                    datalabels: { color: (ctx) => ctx.dataset.backgroundColor === '#ffff00' ? '#000' : '#fff', font: {weight: 'bold'}, formatter: v => v > 5 ? v + '%' : '' } 
+                    legend: { position: 'bottom', labels: { boxWidth: 10, font: {size: 10} } },
+                    datalabels: { color: (ctx) => [0, 3, 4].includes(ctx.datasetIndex) && !isA ? '#fff' : (isA && [0, 3, 4].includes(ctx.datasetIndex) ? '#fff' : '#000'), font: {weight: 'bold'}, formatter: v => v > 4 ? v + '%' : '' } 
                 }, scales: { x: { stacked: true, display: false }, y: { stacked: true, display: false } } }
             });
-        }, 200);
+        }, 300);
     });
 }
 
-function renderRelatorio(rows) {
-    let html = `<div class="glass-card"><table class="table table-sm small"><thead><tr><th>Edição</th><th>Proficiência</th><th>IDE</th><th>Indicador</th></tr></thead><tbody>`;
-    rows.forEach(r => {
-        html += `<tr><td>${r.EDICAO}</td><td>${parse(r.PROFICIENCIA_MEDIA).toFixed(1)}</td><td>${(parse(r.IDE_Alfa) || parse(r.IDE)).toFixed(2)}</td><td>${r.INDICADOR}</td></tr>`;
-    });
-    html += `</tbody></table></div>`;
-    document.getElementById('tabRelatorio').innerHTML = html;
-}
-
-// SUMÁRIO EXECUTIVO - AGORA COM IDE INCLUÍDO
 async function abrirSumario() {
-    const area = document.getElementById('sumario-area');
+    const area = document.getElementById('sumario-content');
     area.innerHTML = `
-        <div class="p-4 text-center border-bottom mb-4">
-            <h2 class="fw-800">${document.getElementById('hEscola').innerText}</h2>
-            <h5 class="text-muted">${document.getElementById('hInep').innerText}</h5>
+        <div class="sumario-header text-center">
+            <h1 class="fw-800 mb-1 text-primary">${document.getElementById('hEscola').innerText}</h1>
+            <h5 class="text-muted fw-bold">${document.getElementById('hInep').innerText}</h5>
+            <p class="mb-0 mt-3 small text-uppercase fw-bold text-secondary border-top pt-2">Relatório Executivo SPAECE - Sistema Analytics Maracanaú</p>
         </div>
+        
         <div class="row mb-5">
-            <div class="col-6 text-center"><h6>Evolução de Proficiência</h6><img src="${document.getElementById('chartProf').toDataURL()}" class="img-fluid border rounded"></div>
-            <div class="col-6 text-center"><h6>Evolução do IDE</h6><img src="${document.getElementById('chartIde').toDataURL()}" class="img-fluid border rounded"></div>
+            <div class="col-6"><p class="small fw-bold border-bottom pb-1">Evolução de Proficiência</p><img src="${document.getElementById('chartProf').toDataURL()}" class="img-fluid border p-2 rounded bg-white"></div>
+            <div class="col-6"><p class="small fw-bold border-bottom pb-1">Evolução de IDE</p><img src="${document.getElementById('chartIde').toDataURL()}" class="img-fluid border p-2 rounded bg-white"></div>
         </div>
-        <div id="sum-niveis" class="mt-4"><h5>Histórico de Níveis</h5></div>
+
+        <div class="mt-4">
+            <h5 class="fw-800 text-dark border-bottom pb-2 mb-4">Análise de Níveis por Edição</h5>
+            <div id="clone-niveis"></div>
+        </div>
+
+        <div class="mt-5 pt-5 text-center text-muted border-top" style="font-size: 10px;">
+            Documento gerado em ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR')}.<br>
+            A fidedignidade destes dados está vinculada à base oficial do SPAECE/Maracanaú.
+        </div>
     `;
 
     document.querySelectorAll('#gridNiveis .glass-card').forEach(card => {
         const clone = card.cloneNode(true);
         const canvas = card.querySelector('canvas');
-        if(canvas) {
-            const img = document.createElement('img');
-            img.src = canvas.toDataURL();
-            img.className = "img-fluid w-100 border rounded mt-2";
-            clone.querySelector('canvas').replaceWith(img);
-        }
-        area.querySelector('#sum-niveis').appendChild(clone);
+        const img = document.createElement('img');
+        img.src = canvas.toDataURL();
+        img.className = "img-fluid w-100 mt-2";
+        clone.querySelector('canvas').replaceWith(img);
+        clone.className = "mb-4 border p-4 rounded";
+        area.querySelector('#clone-niveis').appendChild(clone);
     });
 
     new bootstrap.Modal(document.getElementById('modalSumario')).show();
 }
 
 async function gerarPDF() {
-    const area = document.getElementById('sumario-area');
-    const canvas = await html2canvas(area, { scale: 2 });
+    const element = document.getElementById('sumario-content');
+    const canvas = await html2canvas(element, { scale: 2 });
     const pdf = new jspdf.jsPDF('p', 'mm', 'a4');
-    const w = pdf.internal.pageSize.getWidth();
-    const h = (canvas.height * w) / canvas.width;
-    pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, w, h);
+    const imgWidth = 210;
+    const imgHeight = (canvas.height * imgWidth) / canvas.width;
+    pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, imgWidth, imgHeight);
     pdf.save(`Relatorio_Executivo_${document.getElementById('inepInput').value}.pdf`);
 }
 
