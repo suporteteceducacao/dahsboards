@@ -16,68 +16,87 @@
 
     <style>
         :root { 
-            --primary: #0f172a; --bg-app: #f8fafc;
+            --primary: #0f172a; --bg-app: #f1f5f9;
             --vml: #dc2626; --lar: #f97316; --ama: #fbbf24; --vcl: #4ade80; --ves: #166534; --blu: #3b82f6;
         }
         body { background-color: var(--bg-app); font-family: 'Inter', sans-serif; }
         
         #sidebar { width: 300px; height: 100vh; position: fixed; background: var(--primary); color: white; padding: 25px; z-index: 1050; transition: 0.3s; }
         #sidebar.collapsed { margin-left: -300px; }
-        #content { margin-left: 300px; padding: 30px; transition: 0.3s; }
+        #content { margin-left: 300px; padding: 30px; transition: 0.8s cubic-bezier(0.4, 0, 0.2, 1); }
         #content.expanded { margin-left: 0; }
         
-        .glass-card { background: white; border-radius: 15px; padding: 20px; border: 1px solid #e2e8f0; margin-bottom: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.03); }
-        .btn-toggle { position: fixed; left: 260px; top: 20px; z-index: 1100; border-radius: 8px; background: white; border: 1px solid #ddd; }
+        .glass-card { 
+            background: white; border-radius: 15px; padding: 20px; border: 1px solid #e2e8f0; 
+            margin-bottom: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+            animation: slideUp 0.6s ease-out;
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
         
-        .badge-perf { padding: 10px; border-radius: 8px; font-weight: 800; text-align: center; color: white; width: 100%; display: block; }
-        .bg-vml { background: var(--vml); } .bg-lar { background: var(--lar); } .bg-ama { background: var(--ama); color: #000; }
-        .bg-vcl { background: var(--vcl); color: #000; } .bg-ves { background: var(--ves); } .bg-blu { background: var(--blu); }
+        .badge-perf { padding: 12px; border-radius: 10px; font-weight: 800; text-align: center; color: white; width: 100%; display: block; font-size: 1.1rem; }
+        .bg-vml { background: var(--vml); color: white; } 
+        .bg-ama { background: var(--ama); color: black; }
+        .bg-vcl { background: var(--vcl); color: black; } 
+        .bg-ves { background: var(--ves); color: white; }
 
         #splash { position: fixed; inset: 0; background: var(--primary); z-index: 9999; display: flex; align-items: center; justify-content: center; color: white; text-align: center; }
+        
+        /* Estilos PDF/Sumário */
+        .pdf-header { border-bottom: 3px solid var(--primary); margin-bottom: 30px; padding-bottom: 10px; }
+        .pdf-title { font-weight: 800; color: var(--primary); text-transform: uppercase; }
     </style>
 </head>
 <body>
 
 <div id="splash">
     <div>
-        <h1 class="fw-800">MARACANAU ANALYTICS</h1>
-        <div id="loading"><div class="spinner-border text-light mt-3"></div><p>Sincronizando Coluna 'Escola'...</p></div>
+        <h1 class="fw-800">MARACANAÚ ANALYTICS</h1>
+        <div id="loading"><div class="spinner-border text-light mt-3"></div><p class="mt-2">Sincronizando Dados...</p></div>
         <button id="btnEntrar" class="btn btn-primary px-5 fw-bold" style="display:none;" onclick="iniciar()">ACESSAR SISTEMA</button>
     </div>
 </div>
 
 <div id="app" style="display:none;">
     <nav id="sidebar">
-        <h4 class="fw-800 mb-4 text-center">PAINEL SME</h4>
-        <label class="small opacity-50 fw-bold">FILTRAR ESCOLA</label>
-        <select id="selEscola" class="form-select bg-dark text-white border-0 mb-3" onchange="selecionarEscola()"></select>
+        <div class="text-center mb-4">
+            <i class="fas fa-graduation-cap fa-2x mb-2"></i>
+            <h4 class="fw-800">SME PAINEL</h4>
+        </div>
+        <label class="small opacity-50 fw-bold">UNIDADE</label>
+        <select id="selEscola" class="form-select bg-dark text-white border-0 mb-3 shadow-none" onchange="selecionarEscola()"></select>
         <label class="small opacity-50 fw-bold">ETAPA</label>
-        <select id="selEtapa" class="form-select bg-dark text-white border-0 mb-3" onchange="popularComponentes()"></select>
+        <select id="selEtapa" class="form-select bg-dark text-white border-0 mb-3 shadow-none" onchange="popularComponentes()"></select>
         <label class="small opacity-50 fw-bold">COMPONENTE</label>
-        <select id="selComp" class="form-select bg-dark text-white border-0 mb-5" onchange="render()"></select>
+        <select id="selComp" class="form-select bg-dark text-white border-0 mb-5 shadow-none" onchange="render()"></select>
         
-        <button class="btn btn-info w-100 fw-bold text-white mb-2" onclick="gerarSumario()">SUMÁRIO EXECUTIVO</button>
-        <button class="btn btn-outline-danger w-100 btn-sm" onclick="location.reload()">SAIR</button>
+        <button class="btn btn-info w-100 fw-bold text-white mb-2 shadow" onclick="gerarSumario()">
+            <i class="fas fa-file-invoice me-2"></i>SUMÁRIO EXECUTIVO
+        </button>
+        <button class="btn btn-outline-danger w-100 btn-sm mt-4" onclick="location.reload()">SAIR</button>
     </nav>
 
-    <button class="btn btn-toggle no-print" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
+    <button class="btn btn-toggle shadow-sm" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
 
     <main id="content">
         <header class="mb-4">
             <h2 id="hEscola" class="fw-800 text-primary mb-0">---</h2>
-            <span id="hSub" class="badge bg-secondary">---</span>
+            <span id="hSub" class="badge bg-secondary p-2 mt-2">---</span>
         </header>
 
         <ul class="nav nav-pills border-0 mb-4 gap-2">
-            <li class="nav-item"><button class="nav-link active fw-bold" data-bs-toggle="pill" data-bs-target="#tab-prof">PROFICIÊNCIA</button></li>
-            <li class="nav-item"><button class="nav-link fw-bold" data-bs-toggle="pill" data-bs-target="#tab-ide">IDE</button></li>
-            <li class="nav-item"><button class="nav-link fw-bold" data-bs-toggle="pill" data-bs-target="#tab-rede">REDE</button></li>
-            <li class="nav-item"><button class="nav-link fw-bold" data-bs-toggle="pill" data-bs-target="#tab-niveis">NÍVEIS</button></li>
+            <li class="nav-item"><button class="nav-link active fw-bold px-4" data-bs-toggle="pill" data-bs-target="#tab-prof">PROFICIÊNCIA</button></li>
+            <li class="nav-item"><button class="nav-link fw-bold px-4" data-bs-toggle="pill" data-bs-target="#tab-ide">IDE</button></li>
+            <li class="nav-item"><button class="nav-link fw-bold px-4" data-bs-toggle="pill" data-bs-target="#tab-rede">COMPARAÇÃO REDE</button></li>
+            <li class="nav-item"><button class="nav-link fw-bold px-4" data-bs-toggle="pill" data-bs-target="#tab-niveis">NÍVEIS</button></li>
         </ul>
 
         <div class="tab-content">
-            <div class="tab-pane fade show active" id="tab-prof"><div class="glass-card"><canvas id="chartProf" height="350"></canvas></div></div>
-            <div class="tab-pane fade" id="tab-ide"><div class="glass-card"><canvas id="chartIde" height="350"></canvas></div></div>
+            <div class="tab-pane fade show active" id="tab-prof"><div class="glass-card"><canvas id="chartProf" height="380"></canvas></div></div>
+            <div class="tab-pane fade" id="tab-ide"><div class="glass-card"><canvas id="chartIde" height="380"></canvas></div></div>
             <div class="tab-pane fade" id="tab-rede"><div id="area-rede"></div></div>
             <div class="tab-pane fade" id="tab-niveis"><div id="area-niveis"></div></div>
         </div>
@@ -88,12 +107,12 @@
     <div class="modal-dialog modal-xl">
         <div class="modal-content border-0">
             <div class="modal-header bg-primary text-white">
-                <h5 class="fw-bold">RELATÓRIO DE GESTÃO - MARACANAÚ</h5>
+                <h5 class="fw-bold mb-0">RELATÓRIO DE DESEMPENHO EDUCACIONAL</h5>
                 <button class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
-            <div class="modal-body bg-light" id="pdf-content"></div>
-            <div class="modal-footer">
-                <button class="btn btn-success fw-bold" onclick="exportarPDF()">BAIXAR PDF</button>
+            <div class="modal-body bg-white" id="pdf-content" style="padding: 50px;"></div>
+            <div class="modal-footer bg-light">
+                <button class="btn btn-success fw-bold px-4" onclick="exportarPDF()"><i class="fas fa-download me-2"></i>SALVAR PDF</button>
             </div>
         </div>
     </div>
@@ -108,13 +127,12 @@ async function load() {
     try {
         const r = await fetch(WEB_APP_URL);
         database = await r.json();
-        // Filtra a lista de escolas exclusivamente da coluna ESCOLA
         const listaEscolas = [...new Set(database.map(d => d.ESCOLA))].filter(Boolean).sort();
         const sel = document.getElementById('selEscola');
         sel.innerHTML = listaEscolas.map(e => `<option value="${e}" ${e.toUpperCase().includes('MARACANAU') ? 'selected' : ''}>${e}</option>`).join('');
         document.getElementById('loading').style.display = 'none';
         document.getElementById('btnEntrar').style.display = 'inline-block';
-    } catch(e) { console.error(e); }
+    } catch(e) { console.error("Erro na carga:", e); }
 }
 
 function iniciar() {
@@ -164,8 +182,12 @@ function renderProf(rows) {
     if(chartP) chartP.destroy();
     chartP = new Chart(document.getElementById('chartProf'), {
         type: 'bar',
-        data: { labels: rows.map(r => r.EDICAO), datasets: [{ label: 'Proficiência', data: rows.map(r => parse(r.PROFICIENCIA_MEDIA).toFixed(1)), backgroundColor: '#4f46e5' }] },
-        options: { maintainAspectRatio: false, plugins: { datalabels: { anchor:'end', align:'top', font:{weight:'bold'} } } }
+        data: { labels: rows.map(r => r.EDICAO), datasets: [{ label: 'Proficiência', data: rows.map(r => parse(r.PROFICIENCIA_MEDIA).toFixed(1)), backgroundColor: '#4f46e5', borderRadius: 5 }] },
+        options: { 
+            animation: { duration: 1500, easing: 'easeOutQuart' },
+            maintainAspectRatio: false, 
+            plugins: { datalabels: { anchor:'end', align:'top', font:{weight:'bold', size: 14}, formatter: v => v > 0 ? v : '' } } 
+        }
     });
 }
 
@@ -173,38 +195,38 @@ function renderIde(rows) {
     if(chartI) chartI.destroy();
     chartI = new Chart(document.getElementById('chartIde'), {
         type: 'line',
-        data: { labels: rows.map(r => r.EDICAO), datasets: [{ label:'IDE', data: rows.map(r => (parse(r.IDE_Alfa) || parse(r.IDE)).toFixed(2)), borderColor: '#166534', backgroundColor: 'rgba(22,101,52,0.1)', fill: true, tension: 0.3 }] },
-        options: { maintainAspectRatio: false, plugins: { datalabels: { align:'top', font:{weight:'bold'} } } }
+        data: { labels: rows.map(r => r.EDICAO), datasets: [{ label:'IDE', data: rows.map(r => (parse(r.IDE_Alfa) || parse(r.IDE)).toFixed(2)), borderColor: '#166534', backgroundColor: 'rgba(22,101,52,0.1)', fill: true, tension: 0.3, pointRadius: 6 }] },
+        options: { 
+            animation: { duration: 2000 },
+            maintainAspectRatio: false, 
+            plugins: { datalabels: { align:'top', font:{weight:'bold', size: 13}, formatter: v => v > 0 ? v : '' } } 
+        }
     });
 }
 
 function renderRede(rowsEsc, etapa, comp) {
     const cont = document.getElementById('area-rede');
-    cont.innerHTML = `<h5 class="fw-800 mb-4 text-secondary">Comparativo vs Maracanaú (Rede)</h5>`;
-    
-    // Filtra dados da rede baseando-se na coluna ESCOLA contendo "MARACANAU"
+    cont.innerHTML = `<h5 class="fw-800 mb-4 text-secondary">Diferencial de Proficiência vs Rede Municipal</h5>`;
     const baseGeral = database.filter(d => d.ETAPA === etapa && (d.COMPONENTE_CURRICULAR === comp || d.DISCIPLINA === comp));
 
     rowsEsc.slice().reverse().forEach(esc => {
         const anoData = baseGeral.filter(d => d.EDICAO === esc.EDICAO);
         const linhaMar = anoData.find(d => (d.ESCOLA || "").toUpperCase().includes("MARACANAU"));
         const profRede = parse(linhaMar?.PROFICIENCIA_MEDIA);
-        
         const todasProfs = anoData.map(d => parse(d.PROFICIENCIA_MEDIA)).filter(p => p > 0);
         const max = Math.max(...todasProfs);
         const min = Math.min(...todasProfs);
-        
         const diff = parse(esc.PROFICIENCIA_MEDIA) - profRede;
-        const corDiff = diff > 0 ? 'bg-vcl' : (diff < 0 ? 'bg-vml' : 'bg-blu');
+        const corDiff = diff > 0 ? 'bg-ves' : (diff < 0 ? 'bg-vml' : 'bg-blu');
 
         cont.innerHTML += `
-            <div class="glass-card">
+            <div class="glass-card shadow-sm border-start border-4 border-primary">
                 <div class="row align-items-center text-center">
                     <div class="col-md-2"><b>EDIÇÃO ${esc.EDICAO}</b></div>
-                    <div class="col-md-2">Escola<br><b>${parse(esc.PROFICIENCIA_MEDIA).toFixed(1)}</b></div>
+                    <div class="col-md-2">Escola<br><b class="fs-4">${parse(esc.PROFICIENCIA_MEDIA).toFixed(1)}</b></div>
                     <div class="col-md-2 text-primary">Rede<br><b>${profRede.toFixed(1)}</b></div>
-                    <div class="col-md-3"><div class="badge-perf ${corDiff}">${diff > 0 ? '+':''}${diff.toFixed(1)} pts</div></div>
-                    <div class="col-md-3 small">Min: ${min.toFixed(1)} | Máx: ${max.toFixed(1)}</div>
+                    <div class="col-md-3"><div class="badge-perf ${corDiff}">${diff > 0 ? '+':''}${diff.toFixed(1)} Pts</div></div>
+                    <div class="col-md-3 small">Mín: ${min.toFixed(1)} | Máx: ${max.toFixed(1)}</div>
                 </div>
             </div>`;
     });
@@ -233,10 +255,10 @@ function renderNiveis(rows, etapa) {
         cont.innerHTML += `
             <div class="glass-card">
                 <div class="row align-items-center">
-                    <div class="col-md-8"><h6>Edição ${row.EDICAO}</h6><div style="height:100px"><canvas id="${id}"></canvas></div></div>
+                    <div class="col-md-8"><h6>Edição ${row.EDICAO} - Distribuição por Níveis</h6><div style="height:120px"><canvas id="${id}"></canvas></div></div>
                     <div class="col-md-4">
-                        <div class="badge-perf ${soma > 75 ? 'bg-ves' : (soma > 50 ? 'bg-vcl' : 'bg-lar')}">
-                            APRENDIZAGEM<br><span class="fs-3">${soma.toFixed(1)}%</span>
+                        <div class="badge-perf ${soma > 75 ? 'bg-ves' : (soma > 50 ? 'bg-vcl' : 'bg-ama')}">
+                            APRENDIZAGEM<br><span class="fs-2">${soma.toFixed(1)}%</span>
                         </div>
                     </div>
                 </div>
@@ -245,53 +267,87 @@ function renderNiveis(rows, etapa) {
         setTimeout(() => {
             new Chart(document.getElementById(id), {
                 type: 'bar', data: { labels: [''], datasets: l.map((lab, idx) => ({ label: lab, data: [v[idx].toFixed(1)], backgroundColor: c[idx] })) },
-                options: { indexAxis: 'y', maintainAspectRatio: false, plugins: { legend: { display: false }, datalabels: { color: '#000', font: {weight: 'bold'}, formatter: val => val > 0 ? val + '%' : '' } }, scales: { x: { stacked: true, display: false }, y: { stacked: true, display: false } } }
+                options: { 
+                    indexAxis: 'y', maintainAspectRatio: false, 
+                    plugins: { 
+                        legend: { display: false }, 
+                        datalabels: { 
+                            color: (ctx) => (ctx.dataset.backgroundColor === '#dc2626' || ctx.dataset.backgroundColor === '#166534') ? '#fff' : '#000',
+                            font: {weight: 'bold', size: 14}, 
+                            formatter: val => val > 0 ? val + '%' : '' 
+                        } 
+                    }, 
+                    scales: { x: { stacked: true, display: false }, y: { stacked: true, display: false } } 
+                }
             });
-        }, 500);
+        }, 400);
     });
 }
 
 async function gerarSumario() {
     const area = document.getElementById('pdf-content');
-    area.innerHTML = '<p class="text-center p-5">Preparando documentos...</p>';
+    area.innerHTML = '<div class="text-center p-5"><div class="spinner-border text-primary"></div><p>Consolidando indicadores...</p></div>';
     
-    setTimeout(() => {
-        const imgProf = document.getElementById('chartProf').toDataURL('image/png');
-        const imgIde = document.getElementById('chartIde').toDataURL('image/png');
+    // Captura os gráficos Proficiencia e IDE antes de abrir o modal
+    const imgProf = document.getElementById('chartProf').toDataURL('image/png', 1.0);
+    const imgIde = document.getElementById('chartIde').toDataURL('image/png', 1.0);
 
-        area.innerHTML = `
-            <div style="background:white; padding:40px;">
-                <h2 class="text-center text-primary fw-800">${document.getElementById('hEscola').innerText}</h2>
-                <hr>
-                <div class="row my-4">
-                    <div class="col-6 text-center"><h6>Evolução Proficiência</h6><img src="${imgProf}" class="img-fluid border"></div>
-                    <div class="col-6 text-center"><h6>Evolução IDE</h6><img src="${imgIde}" class="img-fluid border"></div>
+    area.innerHTML = `
+        <div class="pdf-header row align-items-center">
+            <div class="col-8">
+                <h1 class="pdf-title mb-0">SME Maracanaú</h1>
+                <p class="mb-0 fw-bold">Gestão de Resultados Educacionais - SPAECE</p>
+            </div>
+            <div class="col-4 text-end small">
+                <b>Unidade:</b> ${document.getElementById('hEscola').innerText}<br>
+                <b>Data:</b> ${new Date().toLocaleDateString()}
+            </div>
+        </div>
+
+        <div class="row mb-5 g-4">
+            <div class="col-6">
+                <div class="p-3 border rounded text-center">
+                    <h6 class="fw-bold mb-3 text-primary">Evolução Histórica Proficiência</h6>
+                    <img src="${imgProf}" style="width:100%; height:auto;">
                 </div>
-                <div id="pdf-detalhes"></div>
-            </div>`;
+            </div>
+            <div class="col-6">
+                <div class="p-3 border rounded text-center">
+                    <h6 class="fw-bold mb-3 text-primary">Evolução Histórica IDE</h6>
+                    <img src="${imgIde}" style="width:100%; height:auto;">
+                </div>
+            </div>
+        </div>
 
-        document.querySelectorAll('#area-niveis .glass-card').forEach(card => {
-            const clone = card.cloneNode(true);
-            const canv = card.querySelector('canvas');
-            if(canv) {
-                const img = document.createElement('img');
-                img.src = canv.toDataURL('image/png');
-                img.className = "w-100";
-                clone.querySelector('canvas').replaceWith(img);
-            }
-            area.querySelector('#pdf-detalhes').appendChild(clone);
-        });
+        <div id="pdf-detalhes-area">
+            <h5 class="fw-800 border-bottom pb-2 mb-4"><i class="fas fa-chart-area me-2"></i>Análise por Níveis de Aprendizagem</h5>
+        </div>
+    `;
 
-        new bootstrap.Modal(document.getElementById('modalSumario')).show();
-    }, 600);
+    document.querySelectorAll('#area-niveis .glass-card').forEach(card => {
+        const clone = card.cloneNode(true);
+        const canv = card.querySelector('canvas');
+        if(canv) {
+            const img = document.createElement('img');
+            img.src = canv.toDataURL('image/png');
+            img.style.width = "100%";
+            clone.querySelector('canvas').replaceWith(img);
+        }
+        area.querySelector('#pdf-detalhes-area').appendChild(clone);
+    });
+
+    new bootstrap.Modal(document.getElementById('modalSumario')).show();
 }
 
 async function exportarPDF() {
     const el = document.getElementById('pdf-content');
-    const canvas = await html2canvas(el, { scale: 2 });
+    const canvas = await html2canvas(el, { scale: 2, useCORS: true });
     const pdf = new jspdf.jsPDF('p', 'mm', 'a4');
-    pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, 210, (canvas.height * 210) / canvas.width);
-    pdf.save(`Relatorio_${document.getElementById('hEscola').innerText}.pdf`);
+    const imgWidth = 190;
+    const imgHeight = (canvas.height * imgWidth) / canvas.width;
+    
+    pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 10, 10, imgWidth, imgHeight);
+    pdf.save(`Relatorio_SME_${document.getElementById('hEscola').innerText}.pdf`);
 }
 
 window.onload = load;
