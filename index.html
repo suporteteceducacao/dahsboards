@@ -21,7 +21,6 @@
         }
         body { background-color: var(--bg-app); font-family: 'Inter', sans-serif; }
         
-        /* Sidebar & Layout */
         #sidebar { width: 300px; height: 100vh; position: fixed; background: var(--primary); color: white; padding: 25px; z-index: 1050; transition: 0.3s; }
         #sidebar.collapsed { margin-left: -300px; }
         #content { margin-left: 300px; padding: 30px; transition: 0.3s; }
@@ -30,15 +29,11 @@
         .glass-card { background: white; border-radius: 15px; padding: 20px; border: 1px solid #e2e8f0; margin-bottom: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.03); }
         .btn-toggle { position: fixed; left: 260px; top: 20px; z-index: 1100; border-radius: 8px; background: white; border: 1px solid #ddd; }
         
-        /* Status Badges */
         .badge-perf { padding: 10px; border-radius: 8px; font-weight: 800; text-align: center; color: white; width: 100%; display: block; }
         .bg-vml { background: var(--vml); } .bg-lar { background: var(--lar); } .bg-ama { background: var(--ama); color: #000; }
         .bg-vcl { background: var(--vcl); color: #000; } .bg-ves { background: var(--ves); } .bg-blu { background: var(--blu); }
 
-        /* Splash Screen */
         #splash { position: fixed; inset: 0; background: var(--primary); z-index: 9999; display: flex; align-items: center; justify-content: center; color: white; text-align: center; }
-        
-        @media print { .no-print { display: none; } }
     </style>
 </head>
 <body>
@@ -46,15 +41,15 @@
 <div id="splash">
     <div>
         <h1 class="fw-800">MARACANAU ANALYTICS</h1>
-        <div id="loading"><div class="spinner-border text-light mt-3"></div><p>Carregando Base de Dados...</p></div>
+        <div id="loading"><div class="spinner-border text-light mt-3"></div><p>Sincronizando Coluna 'Escola'...</p></div>
         <button id="btnEntrar" class="btn btn-primary px-5 fw-bold" style="display:none;" onclick="iniciar()">ACESSAR SISTEMA</button>
     </div>
 </div>
 
 <div id="app" style="display:none;">
     <nav id="sidebar">
-        <h4 class="fw-800 mb-4 text-center">MENU</h4>
-        <label class="small opacity-50 fw-bold">ESCOLA</label>
+        <h4 class="fw-800 mb-4 text-center">PAINEL SME</h4>
+        <label class="small opacity-50 fw-bold">FILTRAR ESCOLA</label>
         <select id="selEscola" class="form-select bg-dark text-white border-0 mb-3" onchange="selecionarEscola()"></select>
         <label class="small opacity-50 fw-bold">ETAPA</label>
         <select id="selEtapa" class="form-select bg-dark text-white border-0 mb-3" onchange="popularComponentes()"></select>
@@ -73,11 +68,11 @@
             <span id="hSub" class="badge bg-secondary">---</span>
         </header>
 
-        <ul class="nav nav-tabs border-0 mb-4 gap-2">
-            <li class="nav-item"><button class="nav-link active fw-bold border-0" data-bs-toggle="tab" data-bs-target="#tab-prof">PROFICIÊNCIA</button></li>
-            <li class="nav-item"><button class="nav-link fw-bold border-0" data-bs-toggle="tab" data-bs-target="#tab-ide">IDE</button></li>
-            <li class="nav-item"><button class="nav-link fw-bold border-0" data-bs-toggle="tab" data-bs-target="#tab-rede">REDE</button></li>
-            <li class="nav-item"><button class="nav-link fw-bold border-0" data-bs-toggle="tab" data-bs-target="#tab-niveis">NÍVEIS</button></li>
+        <ul class="nav nav-pills border-0 mb-4 gap-2">
+            <li class="nav-item"><button class="nav-link active fw-bold" data-bs-toggle="pill" data-bs-target="#tab-prof">PROFICIÊNCIA</button></li>
+            <li class="nav-item"><button class="nav-link fw-bold" data-bs-toggle="pill" data-bs-target="#tab-ide">IDE</button></li>
+            <li class="nav-item"><button class="nav-link fw-bold" data-bs-toggle="pill" data-bs-target="#tab-rede">REDE</button></li>
+            <li class="nav-item"><button class="nav-link fw-bold" data-bs-toggle="pill" data-bs-target="#tab-niveis">NÍVEIS</button></li>
         </ul>
 
         <div class="tab-content">
@@ -91,15 +86,14 @@
 
 <div class="modal fade" id="modalSumario" tabindex="-1">
     <div class="modal-dialog modal-xl">
-        <div class="modal-content">
+        <div class="modal-content border-0">
             <div class="modal-header bg-primary text-white">
-                <h5 class="fw-bold">Sumário Executivo Estruturado</h5>
+                <h5 class="fw-bold">RELATÓRIO DE GESTÃO - MARACANAÚ</h5>
                 <button class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
-            <div class="modal-body bg-light" id="pdf-content" style="padding: 40px;">
-                </div>
+            <div class="modal-body bg-light" id="pdf-content"></div>
             <div class="modal-footer">
-                <button class="btn btn-success fw-bold" onclick="exportarPDF()"><i class="fas fa-file-pdf"></i> BAIXAR RELATÓRIO PDF</button>
+                <button class="btn btn-success fw-bold" onclick="exportarPDF()">BAIXAR PDF</button>
             </div>
         </div>
     </div>
@@ -114,12 +108,13 @@ async function load() {
     try {
         const r = await fetch(WEB_APP_URL);
         database = await r.json();
-        const escolas = [...new Set(database.map(d => d.ESCOLA || d.NO_MUNICIPIO))].sort();
+        // Filtra a lista de escolas exclusivamente da coluna ESCOLA
+        const listaEscolas = [...new Set(database.map(d => d.ESCOLA))].filter(Boolean).sort();
         const sel = document.getElementById('selEscola');
-        sel.innerHTML = escolas.map(e => `<option value="${e}" ${e.includes('MARACANAU') ? 'selected' : ''}>${e}</option>`).join('');
+        sel.innerHTML = listaEscolas.map(e => `<option value="${e}" ${e.toUpperCase().includes('MARACANAU') ? 'selected' : ''}>${e}</option>`).join('');
         document.getElementById('loading').style.display = 'none';
         document.getElementById('btnEntrar').style.display = 'inline-block';
-    } catch(e) { alert("Erro ao conectar com Google Sheets."); }
+    } catch(e) { console.error(e); }
 }
 
 function iniciar() {
@@ -136,7 +131,7 @@ function toggleSidebar() {
 
 function selecionarEscola() {
     const nome = document.getElementById('selEscola').value;
-    const filter = database.filter(d => (d.ESCOLA || d.NO_MUNICIPIO) === nome);
+    const filter = database.filter(d => d.ESCOLA === nome);
     const etapas = [...new Set(filter.map(d => d.ETAPA))].sort();
     document.getElementById('selEtapa').innerHTML = etapas.map(e => `<option>${e}</option>`).join('');
     popularComponentes();
@@ -145,7 +140,7 @@ function selecionarEscola() {
 function popularComponentes() {
     const nome = document.getElementById('selEscola').value;
     const etapa = document.getElementById('selEtapa').value;
-    const comps = [...new Set(database.filter(d => (d.ESCOLA || d.NO_MUNICIPIO) === nome && d.ETAPA === etapa).map(d => d.COMPONENTE_CURRICULAR || d.DISCIPLINA))].sort();
+    const comps = [...new Set(database.filter(d => d.ESCOLA === nome && d.ETAPA === etapa).map(d => d.COMPONENTE_CURRICULAR || d.DISCIPLINA))].sort();
     document.getElementById('selComp').innerHTML = comps.map(c => `<option>${c}</option>`).join('');
     render();
 }
@@ -154,7 +149,7 @@ function render() {
     const nome = document.getElementById('selEscola').value;
     const etapa = document.getElementById('selEtapa').value;
     const comp = document.getElementById('selComp').value;
-    const rows = database.filter(d => (d.ESCOLA || d.NO_MUNICIPIO) === nome && d.ETAPA === etapa && (d.COMPONENTE_CURRICULAR === comp || d.DISCIPLINA === comp)).sort((a,b) => a.EDICAO - b.EDICAO);
+    const rows = database.filter(d => d.ESCOLA === nome && d.ETAPA === etapa && (d.COMPONENTE_CURRICULAR === comp || d.DISCIPLINA === comp)).sort((a,b) => a.EDICAO - b.EDICAO);
 
     document.getElementById('hEscola').innerText = nome;
     document.getElementById('hSub').innerText = `${etapa} | ${comp}`;
@@ -185,14 +180,15 @@ function renderIde(rows) {
 
 function renderRede(rowsEsc, etapa, comp) {
     const cont = document.getElementById('area-rede');
-    cont.innerHTML = `<h5 class="fw-800 mb-4 text-secondary"><i class="fas fa-network-wired"></i> Comparativo de Rede - Maracanaú</h5>`;
+    cont.innerHTML = `<h5 class="fw-800 mb-4 text-secondary">Comparativo vs Maracanaú (Rede)</h5>`;
     
-    const baseRede = database.filter(d => d.ETAPA === etapa && (d.COMPONENTE_CURRICULAR === comp || d.DISCIPLINA === comp));
+    // Filtra dados da rede baseando-se na coluna ESCOLA contendo "MARACANAU"
+    const baseGeral = database.filter(d => d.ETAPA === etapa && (d.COMPONENTE_CURRICULAR === comp || d.DISCIPLINA === comp));
 
     rowsEsc.slice().reverse().forEach(esc => {
-        const anoData = baseRede.filter(d => d.EDICAO === esc.EDICAO);
-        const linhaMaracanau = anoData.find(d => (d.NO_MUNICIPIO || "").toUpperCase().includes("MARACANAU"));
-        const profRede = parse(linhaMaracanau?.PROFICIENCIA_MEDIA);
+        const anoData = baseGeral.filter(d => d.EDICAO === esc.EDICAO);
+        const linhaMar = anoData.find(d => (d.ESCOLA || "").toUpperCase().includes("MARACANAU"));
+        const profRede = parse(linhaMar?.PROFICIENCIA_MEDIA);
         
         const todasProfs = anoData.map(d => parse(d.PROFICIENCIA_MEDIA)).filter(p => p > 0);
         const max = Math.max(...todasProfs);
@@ -204,17 +200,11 @@ function renderRede(rowsEsc, etapa, comp) {
         cont.innerHTML += `
             <div class="glass-card">
                 <div class="row align-items-center text-center">
-                    <div class="col-md-2"><div class="p-2 border rounded bg-light fw-bold">EDIÇÃO ${esc.EDICAO}</div></div>
-                    <div class="col-md-2">Escola<br><b class="fs-5">${parse(esc.PROFICIENCIA_MEDIA).toFixed(1)}</b></div>
-                    <div class="col-md-2">Rede (MAR)<br><b class="fs-5 text-primary">${profRede.toFixed(1)}</b></div>
-                    <div class="col-md-3">
-                        <div class="badge-perf ${corDiff}">
-                            ${diff > 0 ? '+' : ''}${diff.toFixed(1)} PONTOS
-                        </div>
-                    </div>
-                    <div class="col-md-3 small text-muted">
-                        Min: ${min.toFixed(1)} | Máx: ${max.toFixed(1)}
-                    </div>
+                    <div class="col-md-2"><b>EDIÇÃO ${esc.EDICAO}</b></div>
+                    <div class="col-md-2">Escola<br><b>${parse(esc.PROFICIENCIA_MEDIA).toFixed(1)}</b></div>
+                    <div class="col-md-2 text-primary">Rede<br><b>${profRede.toFixed(1)}</b></div>
+                    <div class="col-md-3"><div class="badge-perf ${corDiff}">${diff > 0 ? '+':''}${diff.toFixed(1)} pts</div></div>
+                    <div class="col-md-3 small">Min: ${min.toFixed(1)} | Máx: ${max.toFixed(1)}</div>
                 </div>
             </div>`;
     });
@@ -243,12 +233,9 @@ function renderNiveis(rows, etapa) {
         cont.innerHTML += `
             <div class="glass-card">
                 <div class="row align-items-center">
-                    <div class="col-md-8">
-                        <h6 class="fw-800">Edição ${row.EDICAO}</h6>
-                        <div style="height:100px"><canvas id="${id}"></canvas></div>
-                    </div>
+                    <div class="col-md-8"><h6>Edição ${row.EDICAO}</h6><div style="height:100px"><canvas id="${id}"></canvas></div></div>
                     <div class="col-md-4">
-                        <div class="badge-perf ${soma > 80 ? 'bg-ves' : (soma > 50 ? 'bg-vcl' : 'bg-lar')}">
+                        <div class="badge-perf ${soma > 75 ? 'bg-ves' : (soma > 50 ? 'bg-vcl' : 'bg-lar')}">
                             APRENDIZAGEM<br><span class="fs-3">${soma.toFixed(1)}%</span>
                         </div>
                     </div>
@@ -257,80 +244,54 @@ function renderNiveis(rows, etapa) {
 
         setTimeout(() => {
             new Chart(document.getElementById(id), {
-                type: 'bar', 
-                data: { labels: [''], datasets: l.map((lab, idx) => ({ label: lab, data: [v[idx].toFixed(1)], backgroundColor: c[idx] })) },
-                options: { 
-                    indexAxis: 'y', maintainAspectRatio: false, 
-                    plugins: { legend: { display: false }, datalabels: { color: '#000', font: {weight: 'bold'}, formatter: val => val > 0 ? val + '%' : '' } }, 
-                    scales: { x: { stacked: true, display: false }, y: { stacked: true, display: false } } 
-                }
+                type: 'bar', data: { labels: [''], datasets: l.map((lab, idx) => ({ label: lab, data: [v[idx].toFixed(1)], backgroundColor: c[idx] })) },
+                options: { indexAxis: 'y', maintainAspectRatio: false, plugins: { legend: { display: false }, datalabels: { color: '#000', font: {weight: 'bold'}, formatter: val => val > 0 ? val + '%' : '' } }, scales: { x: { stacked: true, display: false }, y: { stacked: true, display: false } } }
             });
         }, 500);
     });
 }
 
-// LÓGICA DO SUMÁRIO E PDF
 async function gerarSumario() {
     const area = document.getElementById('pdf-content');
-    area.innerHTML = '<div class="text-center p-5"><div class="spinner-border text-primary"></div><p>Gerando relatório consolidado...</p></div>';
+    area.innerHTML = '<p class="text-center p-5">Preparando documentos...</p>';
     
-    // Pequeno delay para garantir que os gráficos estão prontos para captura
-    setTimeout(async () => {
+    setTimeout(() => {
         const imgProf = document.getElementById('chartProf').toDataURL('image/png');
         const imgIde = document.getElementById('chartIde').toDataURL('image/png');
 
         area.innerHTML = `
-            <div style="background: white; padding: 20px; border-radius: 10px;">
-                <div class="text-center border-bottom pb-4 mb-4">
-                    <h1 class="fw-800 text-primary">${document.getElementById('hEscola').innerText}</h1>
-                    <h5 class="text-muted">Relatório Consolidado SPAECE - Maracanaú</h5>
-                    <p class="small">Gerado em: ${new Date().toLocaleDateString()}</p>
+            <div style="background:white; padding:40px;">
+                <h2 class="text-center text-primary fw-800">${document.getElementById('hEscola').innerText}</h2>
+                <hr>
+                <div class="row my-4">
+                    <div class="col-6 text-center"><h6>Evolução Proficiência</h6><img src="${imgProf}" class="img-fluid border"></div>
+                    <div class="col-6 text-center"><h6>Evolução IDE</h6><img src="${imgIde}" class="img-fluid border"></div>
                 </div>
-                
-                <div class="row mb-5">
-                    <div class="col-6 text-center">
-                        <h6 class="fw-bold">Evolução Proficiência</h6>
-                        <img src="${imgProf}" style="width: 100%; border: 1px solid #eee; padding: 10px; border-radius: 8px;">
-                    </div>
-                    <div class="col-6 text-center">
-                        <h6 class="fw-bold">Evolução IDE</h6>
-                        <img src="${imgIde}" style="width: 100%; border: 1px solid #eee; padding: 10px; border-radius: 8px;">
-                    </div>
-                </div>
+                <div id="pdf-detalhes"></div>
+            </div>`;
 
-                <div id="pdf-niveis-area">
-                    <h5 class="fw-800 border-bottom pb-2 mb-3">Detalhamento de Níveis e Aprendizagem</h5>
-                </div>
-            </div>
-        `;
-
-        // Captura os cards de níveis transformando os canvas internos em imagens reais
         document.querySelectorAll('#area-niveis .glass-card').forEach(card => {
             const clone = card.cloneNode(true);
-            const originalCanvas = card.querySelector('canvas');
-            if(originalCanvas) {
+            const canv = card.querySelector('canvas');
+            if(canv) {
                 const img = document.createElement('img');
-                img.src = originalCanvas.toDataURL('image/png');
-                img.style.width = "100%";
+                img.src = canv.toDataURL('image/png');
+                img.className = "w-100";
                 clone.querySelector('canvas').replaceWith(img);
             }
-            area.querySelector('#pdf-niveis-area').appendChild(clone);
+            area.querySelector('#pdf-detalhes').appendChild(clone);
         });
 
         new bootstrap.Modal(document.getElementById('modalSumario')).show();
-    }, 800);
+    }, 600);
 }
 
 async function exportarPDF() {
     const el = document.getElementById('pdf-content');
     const canvas = await html2canvas(el, { scale: 2 });
-    const imgData = canvas.toDataURL('image/png');
     const pdf = new jspdf.jsPDF('p', 'mm', 'a4');
-    const pdfWidth = 210;
-    const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-    
-    pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-    pdf.save(`Relatorio_SME_${document.getElementById('hEscola').innerText}.pdf`);
+    pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, 210, (canvas.height * 210) / canvas.width);
+    pdf.save(`Relatorio_${document.getElementById('hEscola').innerText}.pdf`);
 }
 
 window.onload = load;
